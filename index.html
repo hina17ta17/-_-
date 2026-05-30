@@ -1,0 +1,2758 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BLOCK PUZZLE NEO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary:#0a0b10;--bg-secondary:#0d1117;--bg-card:#111520;--bg-panel:#0e1219;
+      --neon-blue:#00d4ff;--neon-purple:#a855f7;--neon-pink:#f72585;--neon-cyan:#06ffd4;
+      --text-primary:#e8eaf6;--text-muted:#5c6380;
+      --border-dim:rgba(0,212,255,0.12);--border-bright:rgba(0,212,255,0.55);
+      --glow-blue:0 0 8px #00d4ff,0 0 20px rgba(0,212,255,0.4),0 0 40px rgba(0,212,255,0.15);
+      --glow-purple:0 0 8px #a855f7,0 0 20px rgba(168,85,247,0.4),0 0 40px rgba(168,85,247,0.15);
+      --glow-pink:0 0 8px #f72585,0 0 20px rgba(247,37,133,0.4),0 0 40px rgba(247,37,133,0.15);
+      --transition-screen:0.45s cubic-bezier(0.4,0,0.2,1);
+      --font-main:'Orbitron','Courier New','Consolas',monospace;
+      --font-digit:'Orbitron','Courier New',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-primary);font-family:var(--font-main);color:var(--text-primary)}
+    body{display:flex;align-items:center;justify-content:center}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:999}
+    .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;opacity:1;padding:20px;transition:opacity var(--transition-screen),transform var(--transition-screen)}
+    .screen.hidden{opacity:0;pointer-events:none;transform:translateY(12px)}
+    #screen-start{gap:60px}
+    .title-wrapper{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .title-sub{font-size:clamp(10px,1.4vw,13px);letter-spacing:0.6em;color:var(--neon-cyan);text-transform:uppercase;opacity:0.75;animation:pulse-sub 3s ease-in-out infinite}
+    @keyframes pulse-sub{0%,100%{opacity:0.55}50%{opacity:0.9}}
+    .title-logo{font-size:clamp(52px,10vw,110px);font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#fff;position:relative;text-shadow:0 0 6px #fff,0 0 14px var(--neon-blue),0 0 30px var(--neon-blue),0 0 60px rgba(0,212,255,0.5),0 0 100px rgba(0,212,255,0.2);animation:flicker 6s linear infinite,glow-pulse 2.5s ease-in-out infinite alternate;user-select:none}
+    .title-logo::before,.title-logo::after{content:'BLOCK PUZZLE NEO';position:absolute;top:0;left:0;width:100%;height:100%}
+    .title-logo::before{color:var(--neon-pink);clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%);animation:glitch-top 4.5s steps(1) infinite;opacity:0}
+    .title-logo::after{color:var(--neon-cyan);clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);animation:glitch-bot 4.5s steps(1) infinite 0.2s;opacity:0}
+    @keyframes flicker{0%,94%,96%,98%,100%{opacity:1}95%{opacity:0.85}97%{opacity:0.9}99%{opacity:0.8}}
+    @keyframes glow-pulse{from{text-shadow:0 0 6px #fff,0 0 14px var(--neon-blue),0 0 30px var(--neon-blue),0 0 60px rgba(0,212,255,0.5)}to{text-shadow:0 0 10px #fff,0 0 22px var(--neon-blue),0 0 50px var(--neon-blue),0 0 90px rgba(0,212,255,0.6),0 0 130px rgba(0,212,255,0.25)}}
+    @keyframes glitch-top{0%,88%,90%,100%{opacity:0;transform:none}89%{opacity:0.8;transform:translateX(-3px)}}
+    @keyframes glitch-bot{0%,85%,87%,100%{opacity:0;transform:none}86%{opacity:0.7;transform:translateX(4px)}}
+    .title-sep{display:flex;align-items:center;gap:14px;width:clamp(200px,40vw,420px)}
+    .title-sep span{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--neon-blue),transparent);opacity:0.5}
+    .title-sep-icon{width:6px;height:6px;background:var(--neon-blue);transform:rotate(45deg);box-shadow:var(--glow-blue)}
+    .btn-start{position:relative;padding:18px 64px;font-family:var(--font-main);font-size:clamp(13px,1.8vw,17px);font-weight:700;letter-spacing:0.32em;text-transform:uppercase;color:var(--neon-blue);background:transparent;border:1.5px solid var(--neon-blue);cursor:pointer;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:color 0.25s,background 0.25s,box-shadow 0.25s,transform 0.12s;overflow:hidden}
+    .btn-start::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,255,0.12),rgba(168,85,247,0.08));opacity:0;transition:opacity 0.25s}
+    .btn-start:hover{color:#fff;box-shadow:var(--glow-blue),inset 0 0 20px rgba(0,212,255,0.1);border-color:var(--neon-cyan)}
+    .btn-start:hover::before{opacity:1}
+    .btn-start:active{transform:scale(0.95);box-shadow:none}
+    #screen-mode{gap:48px}
+    .mode-header{text-align:center}
+    .mode-header h2{font-size:clamp(20px,3.5vw,32px);letter-spacing:0.3em;color:var(--text-primary);text-transform:uppercase}
+    .mode-header p{margin-top:8px;font-size:clamp(10px,1.2vw,12px);letter-spacing:0.25em;color:var(--text-muted);text-transform:uppercase}
+    .mode-cards{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+    .mode-card{position:relative;width:clamp(240px,28vw,320px);padding:36px 30px 30px;background:var(--bg-card);border:1px solid var(--border-dim);cursor:pointer;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));transition:transform 0.3s,border-color 0.3s,box-shadow 0.3s;overflow:hidden}
+    .mode-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(0,212,255,0.04));transition:opacity 0.3s}
+    .mode-card::after{content:'';position:absolute;top:0;right:0;width:18px;height:18px;background:linear-gradient(225deg,rgba(0,212,255,0.25) 50%,transparent 50%);transition:background 0.3s}
+    .mode-card:hover{transform:translateY(-6px) scale(1.025);border-color:var(--neon-blue);box-shadow:var(--glow-blue),0 20px 40px rgba(0,0,0,0.5)}
+    .mode-card:hover::after{background:linear-gradient(225deg,var(--neon-blue) 50%,transparent 50%)}
+    .mode-card:active{transform:translateY(-2px) scale(1.01)}
+    .mode-card.two-player{border-color:rgba(168,85,247,0.12)}
+    .mode-card.two-player::after{background:linear-gradient(225deg,rgba(168,85,247,0.25) 50%,transparent 50%)}
+    .mode-card.two-player:hover{border-color:var(--neon-purple);box-shadow:var(--glow-purple),0 20px 40px rgba(0,0,0,0.5)}
+    .mode-card.two-player:hover::after{background:linear-gradient(225deg,var(--neon-purple) 50%,transparent 50%)}
+    .card-icon{font-size:clamp(32px,4.5vw,48px);margin-bottom:18px;line-height:1}
+    .card-num{display:inline-block;font-size:10px;letter-spacing:0.3em;color:var(--neon-blue);text-transform:uppercase;margin-bottom:8px;opacity:0.8}
+    .mode-card.two-player .card-num{color:var(--neon-purple)}
+    .card-title{font-size:clamp(16px,2.2vw,22px);font-weight:700;letter-spacing:0.18em;color:var(--text-primary);text-transform:uppercase;margin-bottom:14px}
+    .card-desc{font-size:clamp(10px,1.1vw,12px);line-height:1.75;letter-spacing:0.05em;color:var(--text-muted)}
+    .btn-back{position:relative;display:flex;align-items:center;gap:10px;padding:11px 32px;font-family:var(--font-main);font-size:clamp(10px,1.2vw,12px);font-weight:600;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-muted);background:transparent;border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:color 0.2s,border-color 0.2s,box-shadow 0.2s}
+    .btn-back::before{content:'◀';font-size:9px;opacity:0.7}
+    .btn-back:hover{color:var(--text-primary);border-color:rgba(255,255,255,0.3);box-shadow:0 0 10px rgba(255,255,255,0.05)}
+    .btn-back:active{transform:scale(0.97)}
+    #screen-game{overflow-y:auto;overflow-x:hidden;justify-content:flex-start;padding:16px 20px 30px}
+    .game-topbar{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 0 18px;border-bottom:1px solid var(--border-dim);flex-shrink:0}
+    .game-topbar-logo{font-size:clamp(14px,2vw,18px);font-weight:900;letter-spacing:0.22em;color:var(--neon-blue);text-shadow:var(--glow-blue)}
+    .game-mode-badge{font-size:10px;letter-spacing:0.3em;padding:5px 14px;border:1px solid var(--neon-purple);color:var(--neon-purple);text-transform:uppercase;box-shadow:var(--glow-purple);opacity:0.85}
+    .btn-quit{display:flex;align-items:center;gap:8px;padding:9px 22px;font-family:var(--font-main);font-size:clamp(9px,1.1vw,11px);font-weight:600;letter-spacing:0.28em;text-transform:uppercase;color:rgba(247,37,133,0.75);background:transparent;border:1px solid rgba(247,37,133,0.3);cursor:pointer;transition:color 0.2s,border-color 0.2s,box-shadow 0.2s}
+    .btn-quit::before{content:'✕';font-size:10px}
+    .btn-quit:hover{color:var(--neon-pink);border-color:var(--neon-pink);box-shadow:var(--glow-pink)}
+    .btn-quit:active{transform:scale(0.96)}
+    .game-content{flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding-top:20px}
+    .layout-single{display:flex;align-items:flex-start;gap:20px}
+    .layout-versus{display:flex;align-items:flex-start;gap:clamp(16px,3vw,40px);flex-wrap:wrap;justify-content:center}
+    .vs-divider{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;align-self:center;flex-shrink:0}
+    .vs-divider span{font-size:clamp(22px,3.5vw,36px);font-weight:900;letter-spacing:0.12em;color:var(--neon-pink);text-shadow:var(--glow-pink);animation:glow-pulse-pink 1.8s ease-in-out infinite alternate}
+    @keyframes glow-pulse-pink{from{text-shadow:0 0 6px var(--neon-pink),0 0 14px rgba(247,37,133,0.4)}to{text-shadow:0 0 12px var(--neon-pink),0 0 28px rgba(247,37,133,0.6),0 0 50px rgba(247,37,133,0.25)}}
+    .vs-line{width:1px;height:clamp(60px,12vh,120px);background:linear-gradient(to bottom,transparent,var(--neon-pink),transparent);opacity:0.4}
+    .player-block{display:flex;align-items:flex-start;gap:14px}
+    .player-block.p2{flex-direction:row-reverse}
+    .side-panel{display:flex;flex-direction:column;gap:12px;width:clamp(80px,10vw,110px)}
+    .panel-box{background:rgba(10,14,26,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 4px 24px rgba(0,0,0,0.4);padding:10px 10px 12px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+    .hold-box{background:rgba(10,14,26,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:2px dashed rgba(255,255,255,0.18);box-shadow:0 4px 24px rgba(0,0,0,0.4);padding:10px 10px 12px;border-radius:16px}
+    .panel-box-label{font-size:9px;letter-spacing:0.3em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;border-bottom:1px solid var(--border-dim);padding-bottom:5px}
+    .panel-box-value{font-family:var(--font-digit);font-size:clamp(14px,1.8vw,20px);font-weight:700;color:var(--neon-blue);text-shadow:var(--glow-blue);letter-spacing:0.06em;word-break:break-all;transition:color 0.15s,text-shadow 0.15s}
+    .panel-box-value.score-flash{animation:score-flash 0.35s ease-out}
+    @keyframes score-flash{0%{color:#fff;text-shadow:0 0 12px #fff,0 0 30px var(--neon-cyan),0 0 60px var(--neon-cyan)}100%{color:var(--neon-blue);text-shadow:var(--glow-blue)}}
+    .mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;aspect-ratio:1}
+    .mini-cell{background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.06);border-radius:1px}
+    .board-wrapper{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .player-label{font-size:10px;letter-spacing:0.4em;text-transform:uppercase;color:var(--text-muted)}
+    .player-label.p1-color{color:var(--neon-blue)}
+    .player-label.p2-color{color:var(--neon-purple)}
+    .block-board{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(22,1fr);height:clamp(320px,50vh,520px);aspect-ratio:6/11;border:1px solid var(--border-bright);box-shadow:0 0 0 1px rgba(0,212,255,0.08),var(--glow-blue);position:relative;background:rgba(0,0,0,0.45)}
+    .block-board.p2-board{border-color:rgba(168,85,247,0.55);box-shadow:0 0 0 1px rgba(168,85,247,0.08),var(--glow-purple)}
+    .board-cell{border-right:1px solid rgba(0,212,255,0.05);border-bottom:1px solid rgba(0,212,255,0.05)}
+    .block-board.p2-board .board-cell{border-right:1px solid rgba(168,85,247,0.05);border-bottom:1px solid rgba(168,85,247,0.05)}
+    .board-cell.ghost{background:rgba(255,255,255,0.0)!important;box-shadow:none!important;outline:1.5px solid rgba(255,255,255,0.35)!important;outline-offset:-1px;border-radius:2px}
+    .board-cell.filled{border-radius:2px}
+    .board-cell.bomb-cell{border-radius:4px;outline:2px solid #fff700;outline-offset:-2px}
+    .board-cell.line-flash{animation:line-flash-anim 0.22s ease-out forwards}
+    @keyframes line-flash-anim{0%{background:#fff!important;box-shadow:0 0 16px #fff,0 0 32px #fff!important;transform:scaleY(1)}60%{background:#fff!important;transform:scaleY(1)}100%{background:transparent!important;box-shadow:none!important;transform:scaleY(0);opacity:0}}
+    .board-cell.bomb-explode{animation:bomb-explode-anim 0.38s ease-out forwards}
+    @keyframes bomb-explode-anim{0%{background:#fff700!important;box-shadow:0 0 24px #fff700,0 0 48px #ff9900,0 0 72px #ff4400!important;transform:scale(1.3)}40%{background:#ff9900!important;transform:scale(1.1)}100%{background:transparent!important;box-shadow:none!important;transform:scale(0);opacity:0}}
+    .block-board.shake{animation:board-shake 0.18s ease-out}
+    @keyframes board-shake{0%{transform:translateY(0)}20%{transform:translateY(5px)}45%{transform:translateY(-3px)}70%{transform:translateY(2px)}100%{transform:translateY(0)}}
+    .block-board.garbage-warn{animation:garbage-warn-anim 0.45s ease-out}
+    @keyframes garbage-warn-anim{0%,100%{box-shadow:0 0 0 1px rgba(0,212,255,0.08),var(--glow-blue)}25%{box-shadow:0 0 0 3px rgba(247,37,133,0.8),0 0 30px rgba(247,37,133,0.6),inset 0 0 20px rgba(247,37,133,0.15)}75%{box-shadow:0 0 0 2px rgba(247,37,133,0.5),0 0 20px rgba(247,37,133,0.4)}}
+    #countdown-overlay{position:fixed;inset:0;background:rgba(10,11,16,0.82);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity 0.3s}
+    #countdown-overlay.hidden{opacity:0;pointer-events:none}
+    .countdown-number{font-size:clamp(96px,20vw,200px);font-weight:900;letter-spacing:-0.02em;color:#fff;line-height:1;text-shadow:0 0 10px #fff,0 0 30px var(--neon-blue),0 0 70px rgba(0,212,255,0.6);animation:countdown-pop 0.4s cubic-bezier(0.3,1.4,0.6,1)}
+    .countdown-number.start-text{font-size:clamp(42px,8vw,80px);letter-spacing:0.22em;color:var(--neon-cyan);text-shadow:var(--glow-blue)}
+    @keyframes countdown-pop{from{transform:scale(0.55);opacity:0}to{transform:scale(1);opacity:1}}
+    .countdown-sub{margin-top:18px;font-size:11px;letter-spacing:0.5em;color:var(--text-muted);text-transform:uppercase}
+    #gameover-overlay{position:fixed;inset:0;background:rgba(10,11,16,0.88);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:24px;transition:opacity 0.4s}
+    #gameover-overlay.hidden{opacity:0;pointer-events:none}
+    .gameover-title{font-size:clamp(44px,9vw,88px);font-weight:900;letter-spacing:0.14em;color:var(--neon-pink);text-shadow:var(--glow-pink),0 0 80px rgba(247,37,133,0.3);animation:glow-pulse-pink 1.4s ease-in-out infinite alternate}
+    .gameover-subtitle{font-size:clamp(18px,3.5vw,36px);font-weight:700;letter-spacing:0.2em;color:var(--neon-cyan);text-shadow:var(--glow-blue)}
+    .gameover-score{display:flex;flex-direction:column;align-items:center;gap:4px}
+    .gameover-score-label{font-size:11px;letter-spacing:0.4em;color:var(--text-muted);text-transform:uppercase}
+    .gameover-score-value{font-size:clamp(28px,5vw,52px);font-weight:700;color:var(--neon-cyan);text-shadow:var(--glow-blue);letter-spacing:0.08em}
+    .gameover-btns{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+    .btn-retry{padding:14px 48px;font-family:var(--font-main);font-size:clamp(11px,1.5vw,14px);font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:var(--neon-blue);background:transparent;border:1.5px solid var(--neon-blue);cursor:pointer;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);transition:color 0.2s,box-shadow 0.2s}
+    .btn-retry:hover{color:#fff;box-shadow:var(--glow-blue)}
+    .btn-retry:active{transform:scale(0.96)}
+    .btn-go-quit{padding:14px 48px;font-family:var(--font-main);font-size:clamp(11px,1.5vw,14px);font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:rgba(247,37,133,0.8);background:transparent;border:1.5px solid rgba(247,37,133,0.4);cursor:pointer;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);transition:color 0.2s,box-shadow 0.2s}
+    .btn-go-quit:hover{color:var(--neon-pink);box-shadow:var(--glow-pink)}
+    .btn-go-quit:active{transform:scale(0.96)}
+    .btn-mute{display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:16px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.22);cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;color:var(--neon-blue);border-radius:2px;flex-shrink:0}
+    .btn-mute:hover{border-color:var(--neon-blue);box-shadow:var(--glow-blue);background:rgba(0,212,255,0.1)}
+    .btn-mute.muted{border-color:rgba(247,37,133,0.3);color:var(--neon-pink);background:rgba(247,37,133,0.04)}
+    .btn-mute.muted:hover{border-color:var(--neon-pink);box-shadow:var(--glow-pink);background:rgba(247,37,133,0.1)}
+    @media(max-width:640px){.mode-cards{flex-direction:column;align-items:center}.mode-card{width:min(90vw,340px)}.layout-versus{flex-direction:column;align-items:center}.vs-divider{flex-direction:row}.vs-line{width:clamp(40px,10vw,80px);height:1px}}
+    @media(max-width:900px){.layout-single{gap:12px}.side-panel{width:80px}}
+    #screen-game::-webkit-scrollbar{width:4px}
+    #screen-game::-webkit-scrollbar-track{background:transparent}
+    #screen-game::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.25);border-radius:2px}
+
+    /* CPU Level Selection Screen */
+    #screen-cpu-level{gap:48px}
+    .cpu-level-header{text-align:center}
+    .cpu-level-header h2{font-size:clamp(20px,3.5vw,32px);letter-spacing:0.3em;color:var(--text-primary);text-transform:uppercase}
+    .cpu-level-header p{margin-top:8px;font-size:clamp(10px,1.2vw,12px);letter-spacing:0.25em;color:var(--text-muted);text-transform:uppercase}
+    .cpu-level-cards{display:flex;flex-direction:column;gap:14px;width:clamp(300px,50vw,560px)}
+    .cpu-level-card{position:relative;display:flex;align-items:center;gap:22px;padding:20px 28px;background:var(--bg-card);border:1px solid var(--border-dim);cursor:pointer;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));transition:transform 0.25s,border-color 0.25s,box-shadow 0.25s;overflow:hidden}
+    .cpu-level-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(168,85,247,0.04));transition:opacity 0.25s}
+    .cpu-level-card:hover{transform:translateX(6px) scale(1.015);border-color:var(--neon-purple);box-shadow:var(--glow-purple),0 12px 28px rgba(0,0,0,0.45)}
+    .cpu-level-card:active{transform:translateX(2px) scale(1.005)}
+    .cpu-level-num{font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:0.05em;color:var(--neon-purple);text-shadow:var(--glow-purple);flex-shrink:0;width:50px;text-align:center;line-height:1}
+    .cpu-level-info{display:flex;flex-direction:column;gap:4px}
+    .cpu-level-name{font-size:clamp(14px,1.8vw,18px);font-weight:700;letter-spacing:0.18em;color:var(--text-primary);text-transform:uppercase}
+    .cpu-level-desc{font-size:clamp(10px,1.1vw,12px);letter-spacing:0.08em;color:var(--text-muted)}
+    .cpu-level-bar{margin-left:auto;display:flex;gap:4px;flex-shrink:0}
+    .cpu-level-pip{width:8px;height:22px;border:1px solid rgba(168,85,247,0.25);border-radius:1px;transition:background 0.2s,border-color 0.2s}
+    .cpu-level-card:hover .cpu-level-pip{border-color:var(--neon-purple)}
+    .cpu-level-card[data-level="1"] .cpu-level-pip:nth-child(1){background:var(--neon-purple);box-shadow:0 0 6px var(--neon-purple)}
+    .cpu-level-card[data-level="2"] .cpu-level-pip:nth-child(-n+2){background:var(--neon-purple);box-shadow:0 0 6px var(--neon-purple)}
+    .cpu-level-card[data-level="3"] .cpu-level-pip:nth-child(-n+3){background:var(--neon-purple);box-shadow:0 0 6px var(--neon-purple)}
+    .cpu-level-card[data-level="4"] .cpu-level-pip{background:var(--neon-purple);box-shadow:0 0 6px var(--neon-purple)}
+
+    /* Per-level Battle Records */
+    .cpu-level-record{display:flex;gap:10px;align-items:center;margin-top:7px}
+    .cpu-level-record-item{display:flex;flex-direction:column;align-items:center;gap:1px}
+    .cpu-level-record-label{font-size:8px;letter-spacing:0.22em;color:var(--text-muted);text-transform:uppercase}
+    .cpu-level-record-val{font-family:var(--font-digit);font-size:clamp(11px,1.4vw,14px);font-weight:700;color:rgba(168,85,247,0.85);letter-spacing:0.06em}
+    .cpu-level-record-sep{font-size:10px;color:var(--text-muted);opacity:0.35;align-self:center}
+
+    /* Global Stats */
+    .global-stats{width:clamp(300px,50vw,560px);background:rgba(10,14,26,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(0,212,255,0.15);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 4px 24px rgba(0,0,0,0.35);clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));padding:12px 18px 14px}
+    .global-stats-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid rgba(0,212,255,0.1)}
+    .global-stats-title{font-size:9px;letter-spacing:0.35em;color:var(--neon-cyan);text-transform:uppercase;opacity:0.8}
+    .global-stats-status{font-size:8px;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase}
+    .global-stats-status.loading{color:var(--neon-cyan);animation:pulse-sub 1.5s ease-in-out infinite}
+    .global-stats-status.error{color:rgba(247,37,133,0.6)}
+    .global-stats-rows{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .global-stats-cell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:1px solid rgba(0,212,255,0.08);background:rgba(0,212,255,0.02);border-radius:2px}
+    .global-stats-cell-lv{font-size:8px;letter-spacing:0.28em;color:var(--text-muted);text-transform:uppercase}
+    .global-stats-cell-val{font-family:var(--font-digit);font-size:clamp(12px,1.5vw,15px);font-weight:700;color:var(--neon-cyan);letter-spacing:0.06em}
+    .global-stats-cell-sub{font-size:8px;letter-spacing:0.15em;color:var(--text-muted)}
+
+    /* VS gameover scores */
+    .gameover-versus-scores{display:flex;align-items:center;gap:clamp(20px,5vw,60px)}
+    .gameover-versus-block{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .gameover-versus-label{font-size:12px;letter-spacing:0.4em;color:var(--text-muted);text-transform:uppercase}
+    .gameover-versus-value{font-family:var(--font-digit);font-size:clamp(32px,6vw,60px);font-weight:700;color:var(--neon-cyan);text-shadow:var(--glow-blue);letter-spacing:0.08em}
+    .gameover-versus-value.winner{color:var(--neon-pink);text-shadow:var(--glow-pink)}
+    .gameover-versus-sep{font-size:clamp(18px,3vw,28px);font-weight:900;letter-spacing:0.12em;color:var(--text-muted);opacity:0.4}
+
+    /* ============================================================
+       GAME CONTROLLER UI
+    ============================================================ */
+    #game-controller{
+      position:fixed;bottom:0;left:0;right:0;z-index:500;
+      display:none; /* ゲーム画面時のみ表示 */
+      align-items:center;justify-content:space-between;
+      padding:12px clamp(16px,5vw,48px) max(12px,env(safe-area-inset-bottom));
+      background:rgba(8,10,18,0.72);
+      backdrop-filter:blur(18px) saturate(160%);
+      -webkit-backdrop-filter:blur(18px) saturate(160%);
+      border-top:1px solid rgba(0,212,255,0.18);
+      box-shadow:0 -4px 32px rgba(0,212,255,0.08),0 -1px 0 rgba(0,212,255,0.06);
+      gap:20px;
+      user-select:none;
+    }
+    #game-controller.visible{display:flex;}
+
+    /* コントローラー表示時にゲーム画面の下途余白 */
+    #screen-game.ctrl-visible{padding-bottom:140px;}
+
+    /* 共通ボタンスタイル */
+    .ctrl-btn{
+      position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:rgba(0,212,255,0.04);
+      border:1px solid rgba(0,212,255,0.28);
+      border-radius:8px;
+      color:var(--neon-blue);
+      font-family:var(--font-main);
+      font-weight:700;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      transition:background 0.12s,box-shadow 0.12s,border-color 0.12s,transform 0.08s;
+      gap:3px;
+    }
+    .ctrl-btn:active,
+    .ctrl-btn.pressed{
+      background:rgba(0,212,255,0.18);
+      box-shadow:0 0 10px rgba(0,212,255,0.5),inset 0 0 8px rgba(0,212,255,0.15);
+      border-color:var(--neon-cyan);
+      transform:scale(0.91);
+    }
+    .ctrl-btn-icon{font-size:18px;line-height:1;pointer-events:none;}
+    .ctrl-btn-label{font-size:8px;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-muted);pointer-events:none;line-height:1;}
+
+    /* 左エリア: 3ボタン トライアングル配置 */
+    .ctrl-left{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:auto auto;
+      gap:8px;
+      width:clamp(120px,28vw,160px);
+    }
+    .ctrl-left .ctrl-btn-close{
+      grid-column:1 / 3;
+      justify-self:center;
+      width:clamp(56px,14vw,72px);
+      height:clamp(42px,9vw,52px);
+      border-color:rgba(247,37,133,0.45);
+      color:var(--neon-pink);
+    }
+    .ctrl-left .ctrl-btn-close:active,
+    .ctrl-left .ctrl-btn-close.pressed{
+      background:rgba(247,37,133,0.18);
+      box-shadow:0 0 10px rgba(247,37,133,0.5),inset 0 0 8px rgba(247,37,133,0.15);
+      border-color:var(--neon-pink);
+    }
+    .ctrl-left .ctrl-btn-lrot,
+    .ctrl-left .ctrl-btn-rrot{
+      width:clamp(56px,14vw,72px);
+      height:clamp(42px,9vw,52px);
+    }
+
+    /* 右エリア: 十字キー */
+    .ctrl-right{
+      display:grid;
+      grid-template-columns:repeat(3, clamp(42px,10vw,56px));
+      grid-template-rows:repeat(3, clamp(42px,10vw,56px));
+      gap:5px;
+    }
+    .ctrl-dpad-btn{
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,212,255,0.04);
+      border:1px solid rgba(0,212,255,0.28);
+      border-radius:6px;
+      color:var(--neon-blue);
+      font-size:20px;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      transition:background 0.12s,box-shadow 0.12s,border-color 0.12s,transform 0.08s;
+    }
+    .ctrl-dpad-btn:active,
+    .ctrl-dpad-btn.pressed{
+      background:rgba(0,212,255,0.18);
+      box-shadow:0 0 10px rgba(0,212,255,0.5),inset 0 0 8px rgba(0,212,255,0.15);
+      border-color:var(--neon-cyan);
+      transform:scale(0.91);
+    }
+    /* 十字キー空セル */
+    .ctrl-dpad-empty{
+      visibility:hidden;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <section id="screen-start" class="screen">
+    <div class="title-wrapper">
+      <span class="title-sub">◈ Cyber Edition ◈</span>
+      <h1 class="title-logo">BLOCK PUZZLE NEO</h1>
+      <div class="title-sep"><span></span><div class="title-sep-icon"></div><span></span></div>
+    </div>
+    <button class="btn-start" id="btn-start">START GAME</button>
+  </section>
+  <section id="screen-mode" class="screen hidden">
+    <div class="mode-header"><h2>SELECT MODE</h2><p>Choose your battle style</p></div>
+    <div class="mode-cards">
+      <div class="mode-card" id="card-1p" role="button" tabindex="0">
+        <div class="card-icon">👾</div><div class="card-num">Mode 01</div>
+        <div class="card-title">1 PLAYER</div>
+        <p class="card-desc">一人でタイムアタックやハイスコアに挑む<br>シングルプレイヤーモード。<br>実力を磨け。</p>
+      </div>
+      <div class="mode-card two-player" id="card-2p" role="button" tabindex="0">
+        <div class="card-icon">🤖</div><div class="card-num">Mode 02</div>
+        <div class="card-title">VS CPU</div>
+        <p class="card-desc">AIが操るCPUと対戦する<br>1人用対戦モード。<br>難易度を選んで挑め。</p>
+      </div>
+    </div>
+    <button class="btn-back" id="btn-back-mode">BACK</button>
+  </section>
+  <section id="screen-cpu-level" class="screen hidden">
+    <div class="cpu-level-header"><h2>CPU LEVEL</h2><p>Select your opponent's strength</p></div>
+    <div class="cpu-level-cards">
+      <div class="cpu-level-card" data-level="1" role="button" tabindex="0">
+        <div class="cpu-level-num">1</div>
+        <div class="cpu-level-info">
+          <div class="cpu-level-name">Beginner</div>
+          <div class="cpu-level-desc">ブロックパズル歴 3日</div>
+          <div class="cpu-level-record">
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">BATTLE</span><span class="cpu-level-record-val" id="rec-battles-1">0</span></div>
+            <span class="cpu-level-record-sep">|</span>
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">WIN</span><span class="cpu-level-record-val" id="rec-wins-1">0</span></div>
+          </div>
+        </div>
+        <div class="cpu-level-bar">
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+        </div>
+      </div>
+      <div class="cpu-level-card" data-level="2" role="button" tabindex="0">
+        <div class="cpu-level-num">2</div>
+        <div class="cpu-level-info">
+          <div class="cpu-level-name">Novice</div>
+          <div class="cpu-level-desc">ブロックパズル歴 1ヶ月</div>
+          <div class="cpu-level-record">
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">BATTLE</span><span class="cpu-level-record-val" id="rec-battles-2">0</span></div>
+            <span class="cpu-level-record-sep">|</span>
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">WIN</span><span class="cpu-level-record-val" id="rec-wins-2">0</span></div>
+          </div>
+        </div>
+        <div class="cpu-level-bar">
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+        </div>
+      </div>
+      <div class="cpu-level-card" data-level="3" role="button" tabindex="0">
+        <div class="cpu-level-num">3</div>
+        <div class="cpu-level-info">
+          <div class="cpu-level-name">Intermediate</div>
+          <div class="cpu-level-desc">ブロックパズル歴 半年</div>
+          <div class="cpu-level-record">
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">BATTLE</span><span class="cpu-level-record-val" id="rec-battles-3">0</span></div>
+            <span class="cpu-level-record-sep">|</span>
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">WIN</span><span class="cpu-level-record-val" id="rec-wins-3">0</span></div>
+          </div>
+        </div>
+        <div class="cpu-level-bar">
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+        </div>
+      </div>
+      <div class="cpu-level-card" data-level="4" role="button" tabindex="0">
+        <div class="cpu-level-num">4</div>
+        <div class="cpu-level-info">
+          <div class="cpu-level-name">Advanced</div>
+          <div class="cpu-level-desc">ブロックパズル歴 1年</div>
+          <div class="cpu-level-record">
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">BATTLE</span><span class="cpu-level-record-val" id="rec-battles-4">0</span></div>
+            <span class="cpu-level-record-sep">|</span>
+            <div class="cpu-level-record-item"><span class="cpu-level-record-label">WIN</span><span class="cpu-level-record-val" id="rec-wins-4">0</span></div>
+          </div>
+        </div>
+        <div class="cpu-level-bar">
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+          <div class="cpu-level-pip"></div><div class="cpu-level-pip"></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-back" id="btn-back-cpu-level">BACK</button>
+    <div class="global-stats" id="global-stats">
+      <div class="global-stats-header">
+        <span class="global-stats-title">🌍 全世界のプレイヤー戦績</span>
+        <span class="global-stats-status" id="global-stats-status">— OFFLINE —</span>
+      </div>
+      <div class="global-stats-rows">
+        <div class="global-stats-cell">
+          <span class="global-stats-cell-lv">LV 1</span>
+          <span class="global-stats-cell-val" id="g-battles-1">—</span>
+          <span class="global-stats-cell-sub" id="g-wins-1">— WIN</span>
+        </div>
+        <div class="global-stats-cell">
+          <span class="global-stats-cell-lv">LV 2</span>
+          <span class="global-stats-cell-val" id="g-battles-2">—</span>
+          <span class="global-stats-cell-sub" id="g-wins-2">— WIN</span>
+        </div>
+        <div class="global-stats-cell">
+          <span class="global-stats-cell-lv">LV 3</span>
+          <span class="global-stats-cell-val" id="g-battles-3">—</span>
+          <span class="global-stats-cell-sub" id="g-wins-3">— WIN</span>
+        </div>
+        <div class="global-stats-cell">
+          <span class="global-stats-cell-lv">LV 4</span>
+          <span class="global-stats-cell-val" id="g-battles-4">—</span>
+          <span class="global-stats-cell-sub" id="g-wins-4">— WIN</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="screen-game" class="screen hidden">
+    <div class="game-topbar">
+      <div class="game-topbar-logo">BLOCK PUZZLE NEO</div>
+      <div class="game-mode-badge" id="game-mode-badge">— SINGLE —</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn-mute" id="btn-mute" title="MUTE">🔊</button>
+        <button class="btn-quit" id="btn-quit">QUIT</button>
+      </div>
+    </div>
+    <div class="game-content" id="game-content"></div>
+  </section>
+  <div id="gameover-overlay" class="hidden">
+    <div class="gameover-title" id="gameover-title">GAME OVER</div>
+    <div class="gameover-subtitle" id="gameover-subtitle"></div>
+    <div class="gameover-score" id="gameover-score-single">
+      <div class="gameover-score-label" id="gameover-score-label">FINAL SCORE</div>
+      <div class="gameover-score-value" id="gameover-score-value">0</div>
+    </div>
+    <div class="gameover-versus-scores hidden" id="gameover-versus-scores">
+      <div class="gameover-versus-block">
+        <div class="gameover-versus-label">1P</div>
+        <div class="gameover-versus-value" id="gameover-score-p1">0</div>
+      </div>
+      <div class="gameover-versus-sep">VS</div>
+      <div class="gameover-versus-block">
+        <div class="gameover-versus-label">CPU</div>
+        <div class="gameover-versus-value" id="gameover-score-cpu">0</div>
+      </div>
+    </div>
+    <div class="gameover-btns">
+      <button class="btn-retry hidden" id="btn-retry">RETRY</button>
+      <button class="btn-go-quit" id="btn-go-quit">QUIT</button>
+    </div>
+  </div>
+  <div id="countdown-overlay" class="hidden">
+    <div class="countdown-number" id="countdown-number">3</div>
+    <div class="countdown-sub">GET READY</div>
+  </div>
+
+  <!-- GAME CONTROLLER UI -->
+  <div id="game-controller">
+    <!-- 左エリア: CLOSE + 左右回転 -->
+    <div class="ctrl-left">
+      <button class="ctrl-btn ctrl-btn-close" id="ctrl-close" type="button">
+        <span class="ctrl-btn-icon">✕</span>
+        <span class="ctrl-btn-label">CLOSE</span>
+      </button>
+      <button class="ctrl-btn ctrl-btn-lrot" id="ctrl-lrot" type="button">
+        <span class="ctrl-btn-icon">↺</span>
+        <span class="ctrl-btn-label">L-ROT</span>
+      </button>
+      <button class="ctrl-btn ctrl-btn-rrot" id="ctrl-rrot" type="button">
+        <span class="ctrl-btn-icon">↻</span>
+        <span class="ctrl-btn-label">R-ROT</span>
+      </button>
+    </div>
+    <!-- 右エリア: 十字キー -->
+    <div class="ctrl-right">
+      <div class="ctrl-dpad-empty"></div>
+      <button class="ctrl-dpad-btn" id="ctrl-up" type="button">↑</button>
+      <div class="ctrl-dpad-empty"></div>
+      <button class="ctrl-dpad-btn" id="ctrl-left" type="button">←</button>
+      <div class="ctrl-dpad-empty"></div>
+      <button class="ctrl-dpad-btn" id="ctrl-right" type="button">→</button>
+      <div class="ctrl-dpad-empty"></div>
+      <button class="ctrl-dpad-btn" id="ctrl-down" type="button">↓</button>
+      <div class="ctrl-dpad-empty"></div>
+    </div>
+  </div>
+  <script>
+    'use strict';
+
+    // ============================================================
+    // CONSTANTS
+    // ============================================================
+    const COLS = 12, ROWS = 22, HIDDEN = 2;
+    const DAS_DELAY = 170, DAS_INTERVAL = 50;
+    const LINE_SCORE = [0, 100, 300, 500, 800];
+    const ATTACK_ROWS = [0, 0, 1, 2, 4];
+    // 爆弾セルのマーカープレフィックス（board配列に格納されるカラー文字列の先頭に付与）
+    const BOMB_PREFIX = 'bomb:';
+    // 何ピースに1回の割合でBOMBピースをスポーンさせるか
+    const BOMB_INTERVAL = 7;
+
+    const TETROMINOES = {
+      I: { color: '#ff6b9d', shapes: [[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],[[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],[[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],[[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]] },
+      O: { color: '#c9f08c', shapes: [[[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]]] },
+      T: { color: '#ffd93d', shapes: [[[0,1,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,1,0,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]],[[0,0,0,0],[1,1,1,0],[0,1,0,0],[0,0,0,0]],[[0,1,0,0],[1,1,0,0],[0,1,0,0],[0,0,0,0]]] },
+      S: { color: '#6bcbf5', shapes: [[[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]],[[0,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,0,0]],[[0,0,0,0],[0,1,1,0],[1,1,0,0],[0,0,0,0]],[[1,0,0,0],[1,1,0,0],[0,1,0,0],[0,0,0,0]]] },
+      Z: { color: '#b5a0e0', shapes: [[[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,0,1,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]],[[0,0,0,0],[1,1,0,0],[0,1,1,0],[0,0,0,0]],[[0,1,0,0],[1,1,0,0],[1,0,0,0],[0,0,0,0]]] },
+      J: { color: '#ff9f7f', shapes: [[[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,1,1,0],[0,1,0,0],[0,1,0,0],[0,0,0,0]],[[0,0,0,0],[1,1,1,0],[0,0,1,0],[0,0,0,0]],[[0,1,0,0],[0,1,0,0],[1,1,0,0],[0,0,0,0]]] },
+      L: { color: '#7dcfb6', shapes: [[[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],[[0,1,0,0],[0,1,0,0],[0,1,1,0],[0,0,0,0]],[[0,0,0,0],[1,1,1,0],[1,0,0,0],[0,0,0,0]],[[1,1,0,0],[0,1,0,0],[0,1,0,0],[0,0,0,0]]] },
+    };
+
+    function getLevelInterval(level) {
+      return Math.max(80, 800 - (level - 1) * 65);
+    }
+    function createEmptyBoard() {
+      return Array.from({ length: ROWS + HIDDEN }, () => Array(COLS).fill(null));
+    }
+    function createBag() {
+      const bag = Object.keys(TETROMINOES);
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      return bag;
+    }
+
+    // ============================================================
+    // AUDIO ENGINE (Web Audio API — no external files required)
+    // ============================================================
+    let audioCtx = null;
+    let masterGain = null;
+    let bgmGain = null;
+    let bgmPlaying = false;
+    let bgmScheduler = null;
+    let bgmStep = 0;
+    let bgmStartTime = 0;
+    let isMuted = false;
+
+    // BGM sequencer parameters — cyberpunk groove @ 128 BPM
+    const BGM_BPM = 128;
+    const BGM_STEP_TIME = 60 / BGM_BPM / 4; // 16th note duration in seconds
+    const BGM_STEPS = 16;
+    const BGM_KICK  = [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0];
+    const BGM_SNARE = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
+    const BGM_HIHAT = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0];
+    const BGM_BASS  = [110,0,0,0, 0,0,131,0, 110,0,0,0, 0,98,0,110];
+
+    function initAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 1.0;
+        masterGain.connect(audioCtx.destination);
+      } catch(e) { console.warn('AudioContext unavailable:', e); }
+    }
+
+    function resumeAudio() {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function setMute(muted) {
+      isMuted = muted;
+      if (masterGain && audioCtx) {
+        masterGain.gain.linearRampToValueAtTime(muted ? 0 : 1, audioCtx.currentTime + 0.05);
+      }
+    }
+
+    function _playTone(when, waveType, freqStart, freqEnd, gainStart, attackTime, duration) {
+      if (!audioCtx || !masterGain) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.connect(g); g.connect(masterGain);
+      osc.type = waveType;
+      osc.frequency.setValueAtTime(Math.max(freqStart, 1), when);
+      if (freqEnd !== freqStart) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), when + duration);
+      }
+      if (attackTime > 0) {
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.linearRampToValueAtTime(gainStart, when + attackTime);
+      } else {
+        g.gain.setValueAtTime(gainStart, when);
+      }
+      g.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+      osc.start(when); osc.stop(when + duration + 0.01);
+    }
+
+    function _playNoise(when, filterType, filterFreq, gainVal, duration) {
+      if (!audioCtx || !masterGain) return;
+      const bufSize = Math.floor(audioCtx.sampleRate * duration);
+      const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = filterType;
+      filter.frequency.value = filterFreq;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(gainVal, when);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+      src.connect(filter); filter.connect(g); g.connect(masterGain);
+      src.start(when); src.stop(when + duration + 0.01);
+    }
+
+    function playSE(type, extra) {
+      if (!audioCtx || isMuted) return;
+      resumeAudio();
+      const now = audioCtx.currentTime;
+      switch (type) {
+        case 'move':
+          _playTone(now, 'square', 520, 560, 0.055, 0, 0.055); break;
+        case 'rotate':
+          _playTone(now, 'square', 700, 860, 0.05, 0, 0.065); break;
+        case 'land':
+          _playTone(now, 'sine', 130, 65, 0.22, 0, 0.16); break;
+        case 'harddrop':
+          _playNoise(now, 'bandpass', 1600, 0.38, 0.07);
+          _playTone(now + 0.06, 'sine', 200, 50, 0.32, 0, 0.18); break;
+        case 'lineclear': {
+          const count = extra || 1;
+          const sets = [[523,659],[523,659,784],[659,784,1047],[659,784,1047,1319]];
+          const freqs = sets[Math.min(count, 4) - 1];
+          freqs.forEach((f, i) => _playTone(now + i * 0.045, 'sawtooth', f, f, 0.12, 0.01, 0.28));
+          break;
+        }
+        case 'gameover':
+          [523,440,349,262,196].forEach((f, i) =>
+            _playTone(now + i * 0.22, 'triangle', f, f, 0.16, 0, 0.38)); break;
+        case 'countdown':
+          _playTone(now, 'sine', 880, 1100, 0.28, 0, 0.18); break;
+        case 'start':
+          [523,659,784,1047].forEach((f, i) =>
+            _playTone(now + i * 0.055, 'square', f, f, 0.1, 0.01, 0.55)); break;
+        case 'explosion':
+          // 爆発SE: ノイズバースト + 低音ドン + 高音フラッシュ
+          _playNoise(now, 'bandpass', 800, 0.55, 0.14);
+          _playNoise(now + 0.04, 'highpass', 3000, 0.28, 0.09);
+          _playTone(now, 'sine', 120, 40, 0.45, 0, 0.28);
+          _playTone(now + 0.06, 'square', 1800, 400, 0.18, 0.005, 0.18); break;
+      }
+    }
+
+    function _bgmScheduleNote(when, noteType, freq) {
+      if (!audioCtx || !bgmGain) return;
+      if (noteType === 'kick') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.connect(g); g.connect(bgmGain);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, when);
+        osc.frequency.exponentialRampToValueAtTime(40, when + 0.16);
+        g.gain.setValueAtTime(1.0, when);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 0.2);
+        osc.start(when); osc.stop(when + 0.21);
+      } else if (noteType === 'snare') {
+        const bufSize = Math.floor(audioCtx.sampleRate * 0.12);
+        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const dat = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) dat[i] = Math.random() * 2 - 1;
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const flt = audioCtx.createBiquadFilter();
+        flt.type = 'highpass'; flt.frequency.value = 800;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.45, when);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 0.12);
+        src.connect(flt); flt.connect(g); g.connect(bgmGain);
+        src.start(when); src.stop(when + 0.13);
+      } else if (noteType === 'hihat') {
+        const bufSize = Math.floor(audioCtx.sampleRate * 0.035);
+        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const dat = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) dat[i] = Math.random() * 2 - 1;
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const flt = audioCtx.createBiquadFilter();
+        flt.type = 'highpass'; flt.frequency.value = 9000;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.18, when);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 0.035);
+        src.connect(flt); flt.connect(g); g.connect(bgmGain);
+        src.start(when); src.stop(when + 0.04);
+      } else if (noteType === 'bass' && freq > 0) {
+        const osc = audioCtx.createOscillator();
+        const flt = audioCtx.createBiquadFilter();
+        flt.type = 'lowpass'; flt.frequency.value = 380;
+        const g = audioCtx.createGain();
+        osc.connect(flt); flt.connect(g); g.connect(bgmGain);
+        osc.type = 'sawtooth'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.65, when);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + BGM_STEP_TIME * 1.8);
+        osc.start(when); osc.stop(when + BGM_STEP_TIME * 2);
+      }
+    }
+
+    function _bgmLoop() {
+      if (!bgmPlaying || !audioCtx || !bgmGain) return;
+      const LOOKAHEAD = 0.12;
+      while (bgmStartTime < audioCtx.currentTime + LOOKAHEAD) {
+        const s = bgmStep % BGM_STEPS;
+        if (BGM_KICK[s])  _bgmScheduleNote(bgmStartTime, 'kick', 0);
+        if (BGM_SNARE[s]) _bgmScheduleNote(bgmStartTime, 'snare', 0);
+        if (BGM_HIHAT[s]) _bgmScheduleNote(bgmStartTime, 'hihat', 0);
+        if (BGM_BASS[s])  _bgmScheduleNote(bgmStartTime, 'bass', BGM_BASS[s]);
+        bgmStartTime += BGM_STEP_TIME;
+        bgmStep++;
+      }
+      bgmScheduler = setTimeout(_bgmLoop, 40);
+    }
+
+    function startBGM() {
+      if (!audioCtx || bgmPlaying) return;
+      bgmPlaying = true;
+      bgmGain = audioCtx.createGain();
+      bgmGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      bgmGain.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 1.0);
+      bgmGain.connect(masterGain);
+      bgmStep = 0;
+      bgmStartTime = audioCtx.currentTime + 0.05;
+      _bgmLoop();
+    }
+
+    function stopBGM() {
+      bgmPlaying = false;
+      if (bgmScheduler) { clearTimeout(bgmScheduler); bgmScheduler = null; }
+      if (bgmGain && audioCtx) {
+        bgmGain.gain.cancelScheduledValues(audioCtx.currentTime);
+        bgmGain.gain.setValueAtTime(bgmGain.gain.value, audioCtx.currentTime);
+        bgmGain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+        const g = bgmGain;
+        bgmGain = null;
+        setTimeout(() => { try { g.disconnect(); } catch(e) {} }, 200);
+      }
+    }
+
+    /**
+     * killAudio()
+     * AudioContextごと即時クローズして全音源を完全破棄。
+     * 予約済みのオシレーターやノイズバッファも即座に消える。
+     * 次のゲームで再利用できるよう全ステート変数をリセットする。
+     */
+    function killAudio() {
+      // BGMスケジューラを即座停止
+      bgmPlaying = false;
+      if (bgmScheduler) { clearTimeout(bgmScheduler); bgmScheduler = null; }
+      bgmGain = null;
+      // Idle BGMも即座停止
+      idleBgmPlaying = false;
+      if (idleBgmScheduler) { clearTimeout(idleBgmScheduler); idleBgmScheduler = null; }
+      idleBgmGain = null;
+      // AudioContextをクローズ（全ノード・全オシレーターを即座消防）
+      if (audioCtx) {
+        try { audioCtx.close(); } catch(e) {}
+        audioCtx = null;
+        masterGain = null;
+      }
+    }
+
+    // ============================================================
+    // IN-GAME BGM (Original — "Block Drop" 2-track 8-bit)
+    // メロディ: square wave / ベース: triangle wave (1oct下) @ BPM144
+    // ============================================================
+    let idleBgmPlaying = false;
+    let idleBgmScheduler = null;
+    let idleBgmGain = null;      // マスターゲイン (killAudio参照用)
+    let idleBgmNoteIndex = 0;
+    let idleBgmNextTime = 0;
+
+    const IDLE_BPM = 144;
+    const _KQ = 60 / IDLE_BPM;  // 四分音符 duration (秒) ≈ 0.4167s
+
+    // [周波数Hz, 秒数]  ─  Q=四分, E=八分, DQ=付点四分, H=二分
+    // ── オリジナルメロディ (Cメジャー / 4/4拍子 × 8小節ループ) ──
+    const IDLE_MELODY = [
+      // ── Part A ── (4小節)
+      // M1
+      [523.25, _KQ],        // C5  Q
+      [659.26, _KQ],        // E5  Q
+      [783.99, _KQ * 0.5],  // G5  E
+      [698.46, _KQ * 0.5],  // F5  E
+      [659.26, _KQ],        // E5  Q
+      // M2
+      [587.33, _KQ],        // D5  Q
+      [698.46, _KQ],        // F5  Q
+      [880.00, _KQ * 0.5],  // A5  E
+      [783.99, _KQ * 0.5],  // G5  E
+      [698.46, _KQ],        // F5  Q
+      // M3
+      [659.26, _KQ * 1.5],  // E5  DQ
+      [698.46, _KQ * 0.5],  // F5  E
+      [783.99, _KQ],        // G5  Q
+      [659.26, _KQ],        // E5  Q
+      // M4
+      [523.25, _KQ],        // C5  Q
+      [587.33, _KQ],        // D5  Q
+      [659.26, _KQ * 2],    // E5  H
+      // ── Part B ── (4小節)
+      // M5
+      [783.99, _KQ * 1.5],  // G5  DQ
+      [880.00, _KQ * 0.5],  // A5  E
+      [987.77, _KQ],        // B5  Q
+      [783.99, _KQ],        // G5  Q
+      // M6
+      [698.46, _KQ],        // F5  Q
+      [880.00, _KQ],        // A5  Q
+      [1046.50, _KQ * 0.5], // C6  E
+      [987.77, _KQ * 0.5],  // B5  E
+      [880.00, _KQ],        // A5  Q
+      // M7
+      [783.99, _KQ],        // G5  Q
+      [698.46, _KQ * 0.5],  // F5  E
+      [659.26, _KQ * 0.5],  // E5  E
+      [587.33, _KQ],        // D5  Q
+      [523.25, _KQ],        // C5  Q
+      // M8
+      [392.00, _KQ],        // G4  Q
+      [523.25, _KQ],        // C5  Q
+      [659.26, _KQ * 2],    // E5  H
+    ];
+
+    // 1音符をスケジュール: メロディ(square) + ベース(triangle, 1oct下)
+    function _idleScheduleNote(when, freq, dur) {
+      if (!audioCtx || !idleBgmGain || freq <= 0) return;
+      const ATK     = 0.008;                        // アタック 8ms
+      const REL     = Math.min(0.055, dur * 0.15);  // リリース: 音符長の15%、最大55ms
+      const noteDur = dur - REL;                    // 実音長
+
+      // ─ メロディトラック (square wave) ─
+      const oscM = audioCtx.createOscillator();
+      const gM   = audioCtx.createGain();
+      oscM.type = 'square';
+      oscM.frequency.setValueAtTime(freq, when);
+      gM.gain.setValueAtTime(0.0001, when);
+      gM.gain.linearRampToValueAtTime(0.30, when + ATK);
+      gM.gain.setValueAtTime(0.30, when + noteDur * 0.78);
+      gM.gain.exponentialRampToValueAtTime(0.0001, when + noteDur);
+      oscM.connect(gM);
+      gM.connect(idleBgmGain);
+      oscM.start(when);
+      oscM.stop(when + noteDur + 0.01);
+
+      // ─ ベーストラック (triangle wave, 1オクターブ下) ─
+      const oscB = audioCtx.createOscillator();
+      const gB   = audioCtx.createGain();
+      oscB.type = 'triangle';
+      oscB.frequency.setValueAtTime(freq * 0.5, when);
+      gB.gain.setValueAtTime(0.0001, when);
+      gB.gain.linearRampToValueAtTime(0.18, when + ATK);
+      gB.gain.setValueAtTime(0.18, when + noteDur * 0.70);
+      gB.gain.exponentialRampToValueAtTime(0.0001, when + noteDur);
+      oscB.connect(gB);
+      gB.connect(idleBgmGain);
+      oscB.start(when);
+      oscB.stop(when + noteDur + 0.01);
+    }
+
+    function _idleBgmLoop() {
+      if (!idleBgmPlaying || !audioCtx || !idleBgmGain) return;
+      const LOOKAHEAD = 0.20;
+      while (idleBgmNextTime < audioCtx.currentTime + LOOKAHEAD) {
+        const [freq, dur] = IDLE_MELODY[idleBgmNoteIndex % IDLE_MELODY.length];
+        _idleScheduleNote(idleBgmNextTime, freq, dur);
+        idleBgmNextTime += dur;
+        idleBgmNoteIndex++;
+      }
+      idleBgmScheduler = setTimeout(_idleBgmLoop, 40);
+    }
+
+    function playIdleBGM() {
+      if (!audioCtx || idleBgmPlaying) return;
+      resumeAudio();
+      idleBgmPlaying = true;
+      idleBgmGain = audioCtx.createGain();
+      idleBgmGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      idleBgmGain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.5);
+      idleBgmGain.connect(masterGain);
+      idleBgmNoteIndex = 0;
+      idleBgmNextTime = audioCtx.currentTime + 0.1;
+      _idleBgmLoop();
+    }
+
+    function stopIdleBGM() {
+      idleBgmPlaying = false;
+      if (idleBgmScheduler) { clearTimeout(idleBgmScheduler); idleBgmScheduler = null; }
+      if (idleBgmGain && audioCtx) {
+        idleBgmGain.gain.cancelScheduledValues(audioCtx.currentTime);
+        idleBgmGain.gain.setValueAtTime(idleBgmGain.gain.value, audioCtx.currentTime);
+        idleBgmGain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+        const g = idleBgmGain;
+        idleBgmGain = null;
+        setTimeout(() => { try { g.disconnect(); } catch(e) {} }, 300);
+      }
+    }
+
+    // ブロック質感ヘルパー
+    function hexToRgb(hex) {
+      const h = hex.replace('#','');
+      return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+    function hexLighten(hex, amount) {
+      const [r,g,b] = hexToRgb(hex);
+      const t = amount/100;
+      return `rgb(${clamp(Math.round(r+(255-r)*t),0,255)},${clamp(Math.round(g+(255-g)*t),0,255)},${clamp(Math.round(b+(255-b)*t),0,255)})`;
+    }
+    function hexDarken(hex, amount) {
+      const [r,g,b] = hexToRgb(hex);
+      const t = 1 - amount/100;
+      return `rgb(${clamp(Math.round(r*t),0,255)},${clamp(Math.round(g*t),0,255)},${clamp(Math.round(b*t),0,255)})`;
+    }
+
+    // ============================================================
+    // BlockBoard CLASS
+    // ============================================================
+    class BlockBoard {
+      constructor(dom, onGameOver, onAttack) {
+        // dom: { boardCells, nextCells, holdCells, scoreEl, levelEl }
+        this.dom = dom;
+        this.onGameOver = onGameOver;
+        this.onAttack = onAttack;
+        this.board = null;
+        this.current = null; // { type, rot, x, y }
+        this.holdType = null;
+        this.holdUsed = false;
+        this.nextType = null;
+        this.bag = [];
+        this.score = 0;
+        this.level = 1;
+        this.totalLines = 0;
+        this.running = false;
+        this.dropTimer = null;
+        this._dasTimer = null;
+        this._dasInterval = null;
+        this._fromHardDrop = false;
+        this.cpuMoveCallback = null;  // CPU controller hook
+        this._cpuThinkTimer = null;
+        this.isOpponent = false; // trueの場合、ブロックをグレーで描画
+        this._bombCounter = 0;  // BOMBピーススポーンカウンター
+        this._isBombPiece = false; // 現在のピースがBOMBかどうか
+      }
+
+      init() {
+        this.board = createEmptyBoard();
+        this.bag = createBag();
+        this.holdType = null;
+        this.holdUsed = false;
+        this.nextType = this._nextFromBag();
+        this.score = 0;
+        this.level = 1;
+        this.totalLines = 0;
+        this.running = false;
+        this._spawn();
+        this._render();
+      }
+
+      start() {
+        this.running = true;
+        this._resetDropTimer();
+        // 初回スポーン分の CPU 思考をここでトリガー
+        if (this.cpuMoveCallback) this.cpuMoveCallback(this);
+      }
+
+      stop() {
+        this.running = false;
+        clearInterval(this.dropTimer);
+        this.dropTimer = null;
+        this.stopDAS();
+        if (this._cpuThinkTimer) { clearTimeout(this._cpuThinkTimer); this._cpuThinkTimer = null; }
+      }
+
+      _nextFromBag() {
+        if (this.bag.length === 0) this.bag = createBag();
+        return this.bag.shift();
+      }
+
+      collides(type, rot, x, y) {
+        const shape = TETROMINOES[type].shapes[rot];
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (!shape[r][c]) continue;
+            const bx = x + c, by = y + r;
+            if (bx < 0 || bx >= COLS || by >= ROWS + HIDDEN) return true;
+            if (by >= 0 && this.board[by][bx]) return true;
+          }
+        }
+        return false;
+      }
+
+      calcGhost() {
+        const { type, rot, x } = this.current;
+        let gy = this.current.y;
+        while (!this.collides(type, rot, x, gy + 1)) gy++;
+        return gy;
+      }
+
+      _spawn() {
+        const type = this.nextType;
+        this.nextType = this._nextFromBag();
+        const startY = -1;
+        const startX = Math.floor((COLS - 4) / 2);
+        // ゲームオーバー判定: 盤面最上段（board[0]）の中央列にブロックが存在する、
+        // または物理的にスポーン位置に配置不能な場合のみ発動
+        if (this.board[0][startX + 1] !== null || this.collides(type, 0, startX, startY)) {
+          this.running = false;
+          playSE('gameover');
+          if (this.onGameOver) this.onGameOver(this);
+          return;
+        }
+        this.current = { type, rot: 0, x: startX, y: startY };
+        this.holdUsed = false;
+        // BOMBピース判定: BOMB_INTERVAL毎に爆弾ピースをスポーン（CPUプレイヤーはBOMBなし）
+        if (!this.isOpponent) {
+          this._bombCounter++;
+          this._isBombPiece = (this._bombCounter % BOMB_INTERVAL === 0);
+        } else {
+          this._isBombPiece = false;
+        }
+        if (this.running && this.cpuMoveCallback) this.cpuMoveCallback(this);
+      }
+
+      lock() {
+        const { type, rot, x, y } = this.current;
+        const shape = TETROMINOES[type].shapes[rot];
+        const isBomb = this._isBombPiece;
+        this._isBombPiece = false;
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (!shape[r][c]) continue;
+            const bx = x + c, by = y + r;
+            if (by >= 0) {
+              // BOMBピースのセルはBOMB_PREFIX付きで格納
+              this.board[by][bx] = isBomb
+                ? BOMB_PREFIX + TETROMINOES[type].color
+                : TETROMINOES[type].color;
+            }
+          }
+        }
+        // Find cleared lines and animate before removing
+        const clearedRows = [];
+        for (let r = ROWS + HIDDEN - 1; r >= 0; r--) {
+          if (this.board[r].every(c => c !== null)) clearedRows.push(r);
+        }
+        const wasHardDrop = this._fromHardDrop;
+        this._fromHardDrop = false;
+        if (clearedRows.length > 0) {
+          // アニメーション中にdropTimerが再発火して二重lock()→二重_spawn()が起きるのを防ぐ
+          // this.currentをnullにしdropTimerを止めてアニメーション期間を完全に封鎖する
+          clearInterval(this.dropTimer);
+          this.dropTimer = null;
+          this.current = null;
+          this._animateClearLines(clearedRows, () => {
+            if (!this.running) return;
+            const { bombBlastSet, extraCleared } = this._clearLines();
+            const cleared = clearedRows.length + extraCleared;
+            if (cleared > 0) {
+              playSE('lineclear', Math.min(cleared, 4));
+              if (bombBlastSet.size > 0) {
+                playSE('explosion');
+                // 爆発アニメーション: 爆発範囲のセルを光らせる
+                this._animateBombBlast(bombBlastSet);
+              }
+              this.score += LINE_SCORE[Math.min(cleared, 4)] * this.level;
+              this.totalLines += cleared;
+              this.level = Math.floor(this.totalLines / 10) + 1;
+              this._updateScore();
+              if (this.onAttack && cleared >= 2) {
+                this.onAttack(cleared);
+              }
+            }
+            this._spawn();
+            if (this.running) { this._resetDropTimer(); this._render(); }
+          });
+        } else {
+          if (!wasHardDrop) playSE('land');
+          this._spawn();
+          if (this.running) { this._resetDropTimer(); this._render(); }
+        }
+      }
+
+      _clearLines() {
+        // 1. 通常のフル行消去 + BOMB爆発範囲収集
+        const bombBlastSet = new Set(); // "row,col" 形式で爆発対象を収集
+
+        for (let r = ROWS + HIDDEN - 1; r >= 0; ) {
+          if (this.board[r].every(c => c !== null)) {
+            // このフル行にBOMBセルがあれば周囲8マスを爆発対象に追加
+            for (let c = 0; c < COLS; c++) {
+              if (this.board[r][c] && this.board[r][c].startsWith(BOMB_PREFIX)) {
+                for (let dr = -1; dr <= 1; dr++) {
+                  for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < ROWS + HIDDEN && nc >= 0 && nc < COLS) {
+                      bombBlastSet.add(`${nr},${nc}`);
+                    }
+                  }
+                }
+              }
+            }
+            this.board.splice(r, 1);
+            this.board.unshift(new Array(COLS).fill(null));
+            // splice後はインデックスをずらす（爆発対象のrow番号も更新が必要だが、
+            // 爆発は通常行消去後に適用するため後処理で実施）
+          } else {
+            r--;
+          }
+        }
+
+        // 2. 爆発後の行番号はsplice済み後の盤面に適用する
+        //    爆発対象セルを null にする（フル行になった行は既に消えている）
+        let extraCleared = 0;
+        if (bombBlastSet.size > 0) {
+          for (const key of bombBlastSet) {
+            const [r, c] = key.split(',').map(Number);
+            if (r >= 0 && r < ROWS + HIDDEN && c >= 0 && c < COLS) {
+              this.board[r][c] = null;
+            }
+          }
+          // 爆発後に新たに出来たフル行も消去
+          for (let r = ROWS + HIDDEN - 1; r >= 0; ) {
+            if (this.board[r].every(c => c !== null)) {
+              this.board.splice(r, 1);
+              this.board.unshift(new Array(COLS).fill(null));
+              extraCleared++;
+            } else {
+              r--;
+            }
+          }
+        }
+
+        // 通常消去 + BOMB爆発後の追加消去数を返す
+        return { bombBlastSet, extraCleared };
+      }
+
+      _animateBombBlast(blastSet) {
+        // blastSet: Set of "row,col" strings (board座標)
+        // 表示行に変換してアニメーションクラスを付与（既に消えたセルは対象外）
+        const { boardCells } = this.dom;
+        if (!boardCells) return;
+        for (const key of blastSet) {
+          const [r, c] = key.split(',').map(Number);
+          const dispR = r - HIDDEN;
+          if (dispR < 0 || dispR >= ROWS) continue;
+          const idx = dispR * COLS + c;
+          if (idx < 0 || idx >= boardCells.length) continue;
+          boardCells[idx].classList.remove('bomb-explode');
+          void boardCells[idx].offsetWidth; // reflow
+          boardCells[idx].classList.add('bomb-explode');
+          setTimeout(() => boardCells[idx].classList.remove('bomb-explode'), 420);
+        }
+      }
+
+      addGarbage(n) {
+        if (n <= 0) return;
+        // 警告エフェクト
+        if (this.dom.boardEl) {
+          this.dom.boardEl.classList.remove('garbage-warn');
+          void this.dom.boardEl.offsetWidth;
+          this.dom.boardEl.classList.add('garbage-warn');
+        }
+        setTimeout(() => {
+          const hole = Math.floor(Math.random() * COLS);
+          for (let i = 0; i < n; i++) {
+            const row = Array(COLS).fill('#444444');
+            row[hole] = null;
+            this.board.shift();
+            this.board.push(row);
+          }
+          this._render();
+        }, 200);
+      }
+
+      _resetDropTimer() {
+        clearInterval(this.dropTimer);
+        this.dropTimer = setInterval(() => {
+          if (!this.running) return;
+          if (this.collides(this.current.type, this.current.rot, this.current.x, this.current.y + 1)) {
+            this.lock();
+          } else {
+            this.current.y++;
+            this._render();
+          }
+        }, getLevelInterval(this.level));
+      }
+
+      _updateScore() {
+        if (this.dom.scoreEl) {
+          const prev = this.dom.scoreEl.textContent;
+          const next = this.score.toLocaleString();
+          if (prev !== next) {
+            this.dom.scoreEl.textContent = next;
+            this.dom.scoreEl.classList.remove('score-flash');
+            void this.dom.scoreEl.offsetWidth;
+            this.dom.scoreEl.classList.add('score-flash');
+          }
+        }
+        if (this.dom.levelEl) {
+          const prev = this.dom.levelEl.textContent;
+          const next = String(this.level);
+          if (prev !== next) {
+            this.dom.levelEl.textContent = next;
+            this.dom.levelEl.classList.remove('score-flash');
+            void this.dom.levelEl.offsetWidth;
+            this.dom.levelEl.classList.add('score-flash');
+          }
+        }
+      }
+
+      _render() {
+        const { boardCells } = this.dom;
+        if (!boardCells) return;
+        // Clear
+        for (let i = 0; i < boardCells.length; i++) {
+          boardCells[i].style.background = '';
+          boardCells[i].style.boxShadow = '';
+          boardCells[i].classList.remove('filled', 'ghost', 'line-flash', 'bomb-cell');
+        }
+        // Locked cells (only rows >= HIDDEN shown)
+        for (let r = HIDDEN; r < ROWS + HIDDEN; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const color = this.board[r][c];
+            if (color) {
+              const idx = (r - HIDDEN) * COLS + c;
+              const isGarbage = color === '#444444';
+              const isBombCell = color.startsWith(BOMB_PREFIX);
+              const actualColor = isBombCell ? color.slice(BOMB_PREFIX.length) : color;
+              if (isGarbage) {
+                boardCells[idx].style.background = 'linear-gradient(180deg, #666 0%, #3a3a3a 60%, #2a2a2a 100%)';
+                boardCells[idx].style.boxShadow = 'inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -2px 0 rgba(0,0,0,0.4)';
+              } else {
+                const displayColor = this.isOpponent ? '#7a8fa0' : actualColor;
+                const light = hexLighten(displayColor, 55);
+                const dark = hexDarken(displayColor, 30);
+                boardCells[idx].style.background = `linear-gradient(160deg, ${light} 0%, ${displayColor} 40%, ${dark} 100%)`;
+                boardCells[idx].style.boxShadow = this.isOpponent
+                  ? `inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 6px rgba(122,143,160,0.5), 0 0 14px rgba(122,143,160,0.25)`
+                  : isBombCell
+                    ? `inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 10px #fff700cc, 0 0 22px #ff990088`
+                    : `inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 8px ${actualColor}99, 0 0 18px ${actualColor}44`;
+              }
+              boardCells[idx].classList.add('filled');
+              if (isBombCell) boardCells[idx].classList.add('bomb-cell');
+            }
+          }
+        }
+        // Ghost
+        if (this.current) {
+          const gy = this.calcGhost();
+          const { type, rot, x } = this.current;
+          const shape = TETROMINOES[type].shapes[rot];
+          for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+              if (!shape[r][c]) continue;
+              const row = gy + r;
+              if (row >= HIDDEN && row < ROWS + HIDDEN) {
+                const idx = (row - HIDDEN) * COLS + (x + c);
+                if (idx >= 0 && idx < boardCells.length && !boardCells[idx].classList.contains('filled')) {
+                  boardCells[idx].classList.add('ghost');
+                }
+              }
+            }
+          }
+          // Current piece
+          for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+              if (!shape[r][c]) continue;
+              const row = this.current.y + r;
+              if (row >= HIDDEN && row < ROWS + HIDDEN) {
+                const idx = (row - HIDDEN) * COLS + (x + c);
+                if (idx >= 0 && idx < boardCells.length) {
+                  const color = TETROMINOES[type].color;
+                  const displayColor = this.isOpponent ? '#7a8fa0' : color;
+                  const light = hexLighten(displayColor, 55);
+                  const dark = hexDarken(displayColor, 30);
+                  boardCells[idx].style.background = `linear-gradient(160deg, ${light} 0%, ${displayColor} 40%, ${dark} 100%)`;
+                  boardCells[idx].style.boxShadow = this.isOpponent
+                    ? `inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 8px rgba(122,143,160,0.7), 0 0 18px rgba(122,143,160,0.35)`
+                    : this._isBombPiece
+                      ? `inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 12px #fff700cc, 0 0 26px #ff990088`
+                      : `inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 10px ${color}cc, 0 0 22px ${color}66`;
+                  boardCells[idx].classList.add('filled');
+                  boardCells[idx].classList.remove('ghost');
+                  if (this._isBombPiece) boardCells[idx].classList.add('bomb-cell');
+                  else boardCells[idx].classList.remove('bomb-cell');
+                }
+              }
+            }
+          }
+        }
+        // Next
+        this._renderMini(this.dom.nextCells, this.nextType);
+        // Hold
+        this._renderMini(this.dom.holdCells, this.holdType);
+        // Score/Level
+        this._updateScore();
+      }
+
+      _renderMini(cells, type) {
+        if (!cells) return;
+        const color = type ? TETROMINOES[type].color : null;
+        const shape = type ? TETROMINOES[type].shapes[0] : null;
+        for (let i = 0; i < cells.length; i++) {
+          cells[i].style.background = '';
+          cells[i].style.boxShadow = '';
+        }
+        if (!shape) return;
+        const displayColor = (type && this.isOpponent) ? '#7a8fa0' : color;
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (shape[r][c]) {
+              const idx = r * 4 + c;
+              const light = hexLighten(displayColor, 55);
+              const dark = hexDarken(displayColor, 30);
+              cells[idx].style.background = `linear-gradient(160deg, ${light} 0%, ${displayColor} 40%, ${dark} 100%)`;
+              cells[idx].style.boxShadow = this.isOpponent
+                ? `inset 0 1px 0 rgba(255,255,255,0.2), 0 0 4px rgba(122,143,160,0.5)`
+                : `inset 0 1px 0 rgba(255,255,255,0.3), 0 0 5px ${color}99`;
+            }
+          }
+        }
+      }
+
+      moveLeft() {
+        if (!this.running || !this.current) return;
+        if (!this.collides(this.current.type, this.current.rot, this.current.x - 1, this.current.y)) {
+          this.current.x--;
+          playSE('move');
+          this._render();
+        }
+      }
+      moveRight() {
+        if (!this.running || !this.current) return;
+        if (!this.collides(this.current.type, this.current.rot, this.current.x + 1, this.current.y)) {
+          this.current.x++;
+          playSE('move');
+          this._render();
+        }
+      }
+      softDrop() {
+        if (!this.running || !this.current) return;
+        if (!this.collides(this.current.type, this.current.rot, this.current.x, this.current.y + 1)) {
+          this.current.y++;
+          this.score += 1;
+          this._render();
+        }
+      }
+      hardDrop() {
+        if (!this.running || !this.current) return;
+        const gy = this.calcGhost();
+        this.score += (gy - this.current.y) * 2;
+        this.current.y = gy;
+        this._render();
+        playSE('harddrop');
+        // スクリーンシェイク
+        if (this.dom.boardEl) {
+          this.dom.boardEl.classList.remove('shake');
+          void this.dom.boardEl.offsetWidth;
+          this.dom.boardEl.classList.add('shake');
+        }
+        this._fromHardDrop = true;
+        this.lock();
+      }
+      rotate(dir) {
+        if (!this.running || !this.current) return;
+        const { type, rot, x, y } = this.current;
+        const numRots = TETROMINOES[type].shapes.length;
+        const newRot = (rot + dir + numRots) % numRots;
+        const kicks = [0, -1, 1, -2, 2];
+        for (const kick of kicks) {
+          if (!this.collides(type, newRot, x + kick, y)) {
+            this.current.rot = newRot;
+            this.current.x = x + kick;
+            playSE('rotate');
+            this._render();
+            return;
+          }
+        }
+      }
+      hold() {
+        if (!this.running || !this.current || this.holdUsed) return;
+        const curType = this.current.type;
+        if (this.holdType) {
+          const prev = this.holdType;
+          this.holdType = curType;
+          this.current = { type: prev, rot: 0, x: Math.floor((COLS - 4) / 2), y: -1 };
+        } else {
+          this.holdType = curType;
+          this._spawn();
+        }
+        this.holdUsed = true;
+        playSE('rotate');
+        this._render();
+      }
+
+      startDAS(fn) {
+        this.stopDAS();
+        fn();
+        this._dasTimer = setTimeout(() => {
+          this._dasInterval = setInterval(fn, DAS_INTERVAL);
+        }, DAS_DELAY);
+      }
+      stopDAS() {
+        clearTimeout(this._dasTimer);
+        clearInterval(this._dasInterval);
+        this._dasTimer = null;
+        this._dasInterval = null;
+      }
+
+      _animateClearLines(rows, callback) {
+        const { boardCells } = this.dom;
+        if (!boardCells) { callback(); return; }
+        // rows は board 座標（HIDDEN含む）
+        const visRows = rows.filter(r => r >= HIDDEN);
+        visRows.forEach(r => {
+          for (let c = 0; c < COLS; c++) {
+            const idx = (r - HIDDEN) * COLS + c;
+            if (idx >= 0 && idx < boardCells.length) {
+              boardCells[idx].classList.remove('line-flash');
+              void boardCells[idx].offsetWidth;
+              boardCells[idx].classList.add('line-flash');
+            }
+          }
+        });
+        setTimeout(callback, 220);
+      }
+    }
+
+    // ============================================================
+    // CPU AI — BOARD EVALUATION
+    // ============================================================
+
+    /**
+     * 各列の高さを計算して返す（長さ COLS の配列）。
+     * board は ROWS+HIDDEN 行だが、非表示行を除いた論理的な高さとして扱う。
+     */
+    function getColHeights(board) {
+      const heights = new Array(COLS).fill(0);
+      for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r < ROWS + HIDDEN; r++) {
+          if (board[r][c] !== null) {
+            heights[c] = ROWS + HIDDEN - r;
+            break;
+          }
+        }
+      }
+      return heights;
+    }
+
+    /**
+     * evaluateBoard(board)
+     * 4つの指標を weights で重み付けしてスコアを返す。
+     * weights: { aggregateHeight, completeLines, holes, bumpiness }
+     */
+    function evaluateBoard(board, weights) {
+      const heights = getColHeights(board);
+
+      // 1. Aggregate Height（合計の高さ）
+      const aggregateHeight = heights.reduce((s, h) => s + h, 0);
+
+      // 2. Complete Lines（消去できるライン数）
+      let completeLines = 0;
+      for (let r = 0; r < ROWS + HIDDEN; r++) {
+        if (board[r].every(c => c !== null)) completeLines++;
+      }
+
+      // 3. Holes（上にブロックがあって塞がれた空マス）
+      let holes = 0;
+      for (let c = 0; c < COLS; c++) {
+        let blockFound = false;
+        for (let r = 0; r < ROWS + HIDDEN; r++) {
+          if (board[r][c] !== null) {
+            blockFound = true;
+          } else if (blockFound) {
+            holes++;
+          }
+        }
+      }
+
+      // 4. Bumpiness（隣り合う列の高さの差の合計）
+      let bumpiness = 0;
+      for (let c = 0; c < COLS - 1; c++) {
+        bumpiness += Math.abs(heights[c] - heights[c + 1]);
+      }
+
+      return (
+        weights.aggregateHeight * aggregateHeight +
+        weights.completeLines   * completeLines   +
+        weights.holes           * holes           +
+        weights.bumpiness       * bumpiness
+      );
+    }
+
+    /**
+     * ブロックをボードに仮置きし、クリア後の新しいボードを返す（元のボードは変更しない）。
+     * 置けない場合は null を返す。
+     */
+    function simulatePlacement(board, type, rot, x) {
+      const shape = TETROMINOES[type].shapes[rot];
+
+      // 下方向にドロップできる最大 y を求める
+      let y = -HIDDEN;
+      while (true) {
+        let collide = false;
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (!shape[r][c]) continue;
+            const bx = x + c;
+            const by = y + r + 1; // 1 行下
+            if (bx < 0 || bx >= COLS || by >= ROWS + HIDDEN) { collide = true; break; }
+            if (by >= 0 && board[by][bx] !== null) { collide = true; break; }
+          }
+          if (collide) break;
+        }
+        if (collide) break;
+        y++;
+      }
+
+      // 初期位置でもう既に衝突している場合は置けない
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (!shape[r][c]) continue;
+          const bx = x + c;
+          const by = y + r;
+          if (bx < 0 || bx >= COLS || by >= ROWS + HIDDEN) return null;
+          if (by >= 0 && board[by][bx] !== null) return null;
+        }
+      }
+
+      // ボードをディープコピーして配置
+      const newBoard = board.map(row => row.slice());
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (!shape[r][c]) continue;
+          const bx = x + c;
+          const by = y + r;
+          if (by >= 0) newBoard[by][bx] = TETROMINOES[type].color;
+        }
+      }
+
+      // ライン消去
+      for (let r = ROWS + HIDDEN - 1; r >= 0; ) {
+        if (newBoard[r].every(cell => cell !== null)) {
+          newBoard.splice(r, 1);
+          newBoard.unshift(new Array(COLS).fill(null));
+        } else {
+          r--;
+        }
+      }
+
+      return newBoard;
+    }
+
+    /**
+     * getBestMove(board, pieceType, weights)
+     * すべての回転 × すべての列で仮置きし、最もスコアの高い配置を返す。
+     * 返り値: { rot, x, score } または null（置ける場所がない場合）
+     */
+    function getBestMove(board, pieceType, weights) {
+      const numRots = TETROMINOES[pieceType].shapes.length;
+      let bestScore = -Infinity;
+      let bestMove = null;
+
+      for (let rot = 0; rot < numRots; rot++) {
+        for (let x = -2; x < COLS + 2; x++) {
+          const newBoard = simulatePlacement(board, pieceType, rot, x);
+          if (newBoard === null) continue;
+
+          const score = evaluateBoard(newBoard, weights);
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = { rot, x, score };
+          }
+        }
+      }
+
+      return bestMove;
+    }
+
+    // ============================================================
+    // CPU CONTROLLER
+    // ============================================================
+
+    /**
+     * レベル別の設定。
+     * weights は evaluateBoard に渡す重み。
+     * 正の値 = 多いほど高スコア（良い）、負の値 = 少ないほど高スコア（良い）。
+     */
+    const CPU_CONFIGS = {
+      1: {
+        thinkMin: 1000, thinkMax: 1500,
+        weights: {
+          aggregateHeight: -0.5,   // 高さを少し気にする
+          completeLines:    0.8,   // ライン消しはそこそこ
+          holes:           -0.1,   // 穴はほぼ無視
+          bumpiness:       -0.05,  // デコボコは無視
+        },
+        useHold: false,
+      },
+      2: {
+        thinkMin: 500, thinkMax: 800,
+        weights: {
+          aggregateHeight: -0.5,   // 高さを気にする
+          completeLines:    2.0,   // ライン消しを強く優先
+          holes:           -4.0,   // 穴を強くペナルティ
+          bumpiness:       -2.0,   // デコボコは少し気にする
+        },
+        useHold: false,
+      },
+      3: {
+        thinkMin: 200, thinkMax: 300,
+        weights: {
+          aggregateHeight: -2.0,
+          completeLines:    1.5,
+          holes:           -12.0,
+          bumpiness:       -8.0,
+        },
+        useHold: true,
+      },
+      4: {
+        thinkMin: 0, thinkMax: 0,
+        weights: {
+          aggregateHeight: -4.0,
+          completeLines:    5.0,
+          holes:           -30.0,
+          bumpiness:       -20.0,
+        },
+        useHold: true,
+      },
+    };
+
+    // ============================================================
+    // Level 3: 4ライン消し狙い（ウェル戦略）
+    // ============================================================
+
+    const L3_WELL_COL = COLS - 1; // 右端をウェル列とする
+
+    /**
+     * Level 3 用盤面評価。
+     * ウェル列（右端）を aggregateHeight・bumpiness・holes の計算から除外し、
+     * ウェルを深く保つほど高スコアにする。
+     */
+    function evaluateBoardL3(board, weights) {
+      const heights = getColHeights(board);
+
+      // Aggregate height (ウェル列除外)
+      let aggregateHeight = 0;
+      for (let c = 0; c < COLS; c++) {
+        if (c !== L3_WELL_COL) aggregateHeight += heights[c];
+      }
+
+      // Complete lines
+      let completeLines = 0;
+      for (let r = 0; r < ROWS + HIDDEN; r++) {
+        if (board[r].every(c => c !== null)) completeLines++;
+      }
+
+      // Holes (ウェル列除外)
+      let holes = 0;
+      for (let c = 0; c < COLS; c++) {
+        if (c === L3_WELL_COL) continue;
+        let blockFound = false;
+        for (let r = 0; r < ROWS + HIDDEN; r++) {
+          if (board[r][c] !== null) { blockFound = true; }
+          else if (blockFound) { holes++; }
+        }
+      }
+
+      // Bumpiness (ウェル列との差は除外: col 0〜COLS-2 の間のみ)
+      let bumpiness = 0;
+      for (let c = 0; c < COLS - 2; c++) {
+        bumpiness += Math.abs(heights[c] - heights[c + 1]);
+      }
+
+      // ウェルの深さボーナス: 他列の平均高さとウェル列の高さの差
+      const avgOtherHeight = aggregateHeight / (COLS - 1);
+      const wellDepthBonus = Math.max(0, avgOtherHeight - heights[L3_WELL_COL]) * 0.8;
+
+      // ウェル列にブロックが積まれたペナルティ
+      const wellBlockedPenalty = heights[L3_WELL_COL] > 0 ? -3.0 * heights[L3_WELL_COL] : 0;
+
+      return (
+        weights.aggregateHeight * aggregateHeight +
+        weights.completeLines   * completeLines   +
+        weights.holes           * holes           +
+        weights.bumpiness       * bumpiness       +
+        wellDepthBonus          +
+        wellBlockedPenalty
+      );
+    }
+
+    /**
+     * 指定の配置がウェル列（右端）にブロックを置くかどうかを判定。
+     */
+    function moveFillsWell(type, rot, x) {
+      const shape = TETROMINOES[type].shapes[rot];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (shape[r][c] && (x + c) === L3_WELL_COL) return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Level 3 用ベストムーブ取得。
+     * I ピース以外がウェルを塞ぐ場合は HOLD を検討する。
+     * 返り値: { rot, x, useHold }
+     */
+    function getBestMoveL3(board, pieceType, holdType, nextType, weights) {
+      function bestForPiece(type) {
+        const numRots = TETROMINOES[type].shapes.length;
+        let bestScore = -Infinity, bestMove = null;
+        for (let rot = 0; rot < numRots; rot++) {
+          for (let x = -2; x < COLS + 2; x++) {
+            const newBoard = simulatePlacement(board, type, rot, x);
+            if (!newBoard) continue;
+            const score = evaluateBoardL3(newBoard, weights);
+            if (score > bestScore) { bestScore = score; bestMove = { rot, x, score }; }
+          }
+        }
+        return bestMove;
+      }
+
+      const moveCurrent = bestForPiece(pieceType);
+
+      // I ピース以外がウェルを塞ぐ手を選んだ場合は HOLD を検討
+      if (pieceType !== 'I' && moveCurrent && moveFillsWell(pieceType, moveCurrent.rot, moveCurrent.x)) {
+        if (holdType === 'I') {
+          // HOLD に I がある → 迷わず交換
+          const moveAfterHold = bestForPiece('I');
+          if (moveAfterHold) return { ...moveAfterHold, useHold: true };
+        } else if (!holdType && nextType === 'I') {
+          // HOLD が空 かつ NEXT が I → 現ピースを HOLD して I を次に使う
+          const moveNext = bestForPiece('I');
+          if (moveNext) return { ...moveNext, useHold: true };
+        }
+        // HOLD しても改善しない → 現在のベストムーブで進む（ウェルは諦める）
+      }
+
+      return moveCurrent ? { ...moveCurrent, useHold: false } : null;
+    }
+
+    // ============================================================
+    // Level 4: 深さ2探索 + ダウンスタック
+    // ============================================================
+
+    /**
+     * Level 4 用ベストムーブ取得（深さ2探索）。
+     * 現在ピース + NEXT の2手先の盤面スコアを最大化する初手を返す。
+     * ゴミブロックがある場合は動的に重みをダウンスタック優先に切り替える。
+     * 返り値: { rot, x, useHold }
+     */
+    function getBestMoveL4(board, pieceType, holdType, nextType, weights) {
+      // ゴミブロック（'#444444'）の存在チェック
+      let hasGarbage = false;
+      outer:
+      for (let r = 0; r < ROWS + HIDDEN; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (board[r][c] === '#444444') { hasGarbage = true; break outer; }
+        }
+      }
+
+      // ゴミあり → ダウンスタック重み（ライン消し・穴解消を最優先）
+      const w = hasGarbage
+        ? { aggregateHeight: -0.8, completeLines: 3.5, holes: -5.0, bumpiness: -0.3 }
+        : weights;
+
+      // 深さ2: board1 の後に piece2 をベストに置いたときの最高スコアを返す
+      function evalDepth2(board1, piece2) {
+        if (!board1) return -Infinity;
+        const numRots2 = TETROMINOES[piece2].shapes.length;
+        let best2 = -Infinity;
+        for (let rot2 = 0; rot2 < numRots2; rot2++) {
+          for (let x2 = -2; x2 < COLS + 2; x2++) {
+            const b2 = simulatePlacement(board1, piece2, rot2, x2);
+            if (!b2) continue;
+            const s = evaluateBoard(b2, w);
+            if (s > best2) best2 = s;
+          }
+        }
+        return best2;
+      }
+
+      let bestScore = -Infinity;
+      let bestFirst = null;
+      let bestUseHold = false;
+
+      // === 現在ピースを打つ（NEXT を depth 2 に使う）===
+      const numRots = TETROMINOES[pieceType].shapes.length;
+      for (let rot = 0; rot < numRots; rot++) {
+        for (let x = -2; x < COLS + 2; x++) {
+          const board1 = simulatePlacement(board, pieceType, rot, x);
+          if (!board1) continue;
+          const score = evalDepth2(board1, nextType);
+          if (score > bestScore) {
+            bestScore = score;
+            bestFirst = { rot, x };
+            bestUseHold = false;
+          }
+        }
+      }
+
+      // === HOLD を使う（hold があればそれを打ち、depth 2 に currentPiece を使う）===
+      // hold が空の場合は currentPiece を HOLD して nextType を打つ
+      const holdPiece = holdType || null;
+      if (holdPiece && holdPiece !== pieceType) {
+        // HOLD に別ピースが入っている → HOLD ピースを打ち、depth 2 に currentPiece
+        const numRotsH = TETROMINOES[holdPiece].shapes.length;
+        for (let rot = 0; rot < numRotsH; rot++) {
+          for (let x = -2; x < COLS + 2; x++) {
+            const board1 = simulatePlacement(board, holdPiece, rot, x);
+            if (!board1) continue;
+            const score = evalDepth2(board1, pieceType);
+            if (score > bestScore) {
+              bestScore = score;
+              bestFirst = { rot, x };
+              bestUseHold = true;
+            }
+          }
+        }
+      } else if (!holdPiece) {
+        // HOLD が空 → currentPiece を HOLD して nextType を打つ
+        const numRotsN = TETROMINOES[nextType].shapes.length;
+        for (let rot = 0; rot < numRotsN; rot++) {
+          for (let x = -2; x < COLS + 2; x++) {
+            const board1 = simulatePlacement(board, nextType, rot, x);
+            if (!board1) continue;
+            // depth 2 は nextType の次なので近似として evaluateBoard の1手のみ
+            const score = evaluateBoard(board1, w);
+            if (score > bestScore) {
+              bestScore = score;
+              bestFirst = { rot, x };
+              bestUseHold = true;
+            }
+          }
+        }
+      }
+
+      return bestFirst ? { ...bestFirst, useHold: bestUseHold } : null;
+    }
+
+    // ============================================================
+    // 共通: 人間らしい操作アニメーションで目標位置へ移動
+    // ============================================================
+
+    /**
+     * applyMoveAnimated(b, move, level)
+     * 思考ディレイ後に呼ばれ、以下の3フェーズでブロックを動かす。
+     *   Phase 1 — 回転: 1回ずつ最短経路で回転 (rotInterval ms ごと)
+     *   Phase 2 — 左右移動: 1マスずつスライド (moveInterval ms ごと)
+     *   Phase 3 — 落下: Lv1,2=ソフトドロップ連打、Lv3,4=ハードドロップ
+     * すべての移動でコリジョン判定を通す。
+     */
+    function applyMoveAnimated(b, move, level) {
+      if (!b.running || !b.current) return;
+
+      if (move.useHold) {
+        b.hold();
+        if (!b.running || !b.current) return;
+      }
+
+      // Lv4: アニメーションなしで即時配置
+      if (level === 4) {
+        const numRots = TETROMINOES[b.current.type].shapes.length;
+        const cwSteps  = (move.rot - b.current.rot + numRots) % numRots;
+        const ccwSteps = (b.current.rot - move.rot + numRots) % numRots;
+        const rotDir   = cwSteps <= ccwSteps ? 1 : -1;
+        let rotRemain  = Math.min(cwSteps, ccwSteps);
+        while (rotRemain-- > 0) {
+          const { type, rot, x, y } = b.current;
+          const nr = (rot + rotDir + TETROMINOES[type].shapes.length) % TETROMINOES[type].shapes.length;
+          const kicks = [0, -1, 1, -2, 2];
+          for (const kick of kicks) {
+            if (!b.collides(type, nr, x + kick, y)) {
+              b.current.rot = nr;
+              b.current.x   = x + kick;
+              break;
+            }
+          }
+        }
+        const shape = TETROMINOES[b.current.type].shapes[move.rot];
+        let minC = 4, maxC = -1;
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (shape[r][c]) { minC = Math.min(minC, c); maxC = Math.max(maxC, c); }
+        b.current.x = Math.max(-minC, Math.min(move.x, COLS - 1 - maxC));
+        b.hardDrop();
+        return;
+      }
+
+      const pieceType = b.current.type;
+
+      // レベル別タイミング
+      const rotInterval  = level <= 2 ? 110 : level === 3 ? 75 : 30;
+      const moveInterval = level <= 1 ? 85  : level === 2 ? 65 : level === 3 ? 50 : 22;
+      const softInterval = level === 1 ? 65 : level <= 3 ? 50 : 35;
+
+      // ターゲットX（境界クランプ済み）を現在の rot から算出
+      function getTargetX(rot) {
+        const shape = TETROMINOES[b.current.type].shapes[rot];
+        let minC = 4, maxC = -1;
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (shape[r][c]) { minC = Math.min(minC, c); maxC = Math.max(maxC, c); }
+          }
+        }
+        return Math.max(-minC, Math.min(move.x, COLS - 1 - maxC));
+      }
+
+      // ── Phase 3: 落下 ──────────────────────────────────
+      function doFall() {
+        if (!b.running || !b.current) return;
+        if (level >= 3) {
+          b.hardDrop();
+        } else {
+          doSoftDropStep();
+        }
+      }
+
+      function doSoftDropStep() {
+        if (!b.running || !b.current) return;
+        if (!b.collides(b.current.type, b.current.rot, b.current.x, b.current.y + 1)) {
+          b.current.y++;
+          b.score += 1;
+          b._render();
+          b._cpuThinkTimer = setTimeout(doSoftDropStep, softInterval);
+        } else {
+          b.lock(); // 底に着いたらロック
+        }
+      }
+
+      // ── Phase 2: 左右移動 ──────────────────────────────
+      function doMoveStep() {
+        if (!b.running || !b.current) return;
+        const targetX = getTargetX(b.current.rot);
+        if (b.current.x === targetX) {
+          doFall();
+          return;
+        }
+        const dir = b.current.x < targetX ? 1 : -1;
+        if (!b.collides(b.current.type, b.current.rot, b.current.x + dir, b.current.y)) {
+          b.current.x += dir;
+          b._render();
+        }
+        // 衝突で進めなくてもループを続けて再評価（次ステップで targetX が同じなら落下へ）
+        if (b.current.x !== targetX) {
+          b._cpuThinkTimer = setTimeout(doMoveStep, moveInterval);
+        } else {
+          doFall();
+        }
+      }
+
+      // ── Phase 1: 回転 ──────────────────────────────────
+      const numRots = TETROMINOES[pieceType].shapes.length;
+      const cwSteps  = (move.rot - b.current.rot + numRots) % numRots;
+      const ccwSteps = (b.current.rot - move.rot + numRots) % numRots;
+      const rotDir   = cwSteps <= ccwSteps ? 1 : -1;
+      let rotRemain  = Math.min(cwSteps, ccwSteps);
+
+      function doRotStep() {
+        if (!b.running || !b.current) return;
+        if (rotRemain > 0) {
+          b.rotate(rotDir);
+          rotRemain--;
+          b._cpuThinkTimer = setTimeout(doRotStep, rotInterval);
+        } else {
+          doMoveStep();
+        }
+      }
+
+      doRotStep();
+    }
+
+    /**
+     * startCpuControl(board, level)
+     * 指定した BlockBoard インスタンスに CPU の思考・移動コールバックをセットする。
+     */
+    function startCpuControl(board, level) {
+      const config = CPU_CONFIGS[level] || CPU_CONFIGS[1];
+
+      board.cpuMoveCallback = function(b) {
+        if (!b.running || !b.current) return;
+
+        const pieceType     = b.current.type;
+        const holdType      = b.holdType;
+        const nextType      = b.nextType;
+        const boardSnapshot = b.board.map(row => row.slice());
+
+        let move = null;
+        if (level === 3) {
+          move = getBestMoveL3(boardSnapshot, pieceType, holdType, nextType, config.weights);
+        } else if (level === 4) {
+          move = getBestMoveL4(boardSnapshot, pieceType, holdType, nextType, config.weights);
+        } else {
+          const best = getBestMove(boardSnapshot, pieceType, config.weights);
+          move = best ? { ...best, useHold: false } : null;
+        }
+
+        if (!move) return;
+
+        // 思考ディレイ後にアニメーション開始
+        const delay = config.thinkMin + Math.random() * (config.thinkMax - config.thinkMin);
+        b._cpuThinkTimer = setTimeout(() => {
+          b._cpuThinkTimer = null;
+          if (!b.running || !b.current) return;
+          if (!move.useHold && b.current.type !== pieceType) return;
+          applyMoveAnimated(b, move, level);
+        }, delay);
+      };
+    }
+
+    // ============================================================
+    // SCREEN STATE
+    // ============================================================
+    const state = {
+      currentScreen: 'start',
+      selectedMode: null,
+    };
+    let cpuLevel = 1;
+
+    const screens = {
+      start:     document.getElementById('screen-start'),
+      mode:      document.getElementById('screen-mode'),
+      'cpu-level': document.getElementById('screen-cpu-level'),
+      game:      document.getElementById('screen-game'),
+    };
+
+    function showScreen(name) {
+      Object.entries(screens).forEach(([k, el]) => el.classList.toggle('hidden', k !== name));
+      state.currentScreen = name;
+    }
+
+    // ============================================================
+    // DOM BUILDER
+    // ============================================================
+    function buildMiniGridEl() {
+      const grid = document.createElement('div');
+      grid.className = 'mini-grid';
+      const cells = [];
+      for (let i = 0; i < 16; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'mini-cell';
+        grid.appendChild(cell);
+        cells.push(cell);
+      }
+      return { grid, cells };
+    }
+
+    function buildPlayerBlock(pid, mirror) {
+      // pid: 'p1' | 'p2', mirror: boolean (p2 is mirrored)
+      const container = document.createElement('div');
+      container.className = `player-block${mirror ? ' p2' : ''}`;
+
+      // Board area
+      const boardWrapper = document.createElement('div');
+      boardWrapper.className = 'board-wrapper';
+
+      const label = document.createElement('div');
+      label.className = `player-label ${pid}-color`;
+      label.textContent = pid === 'p1' ? '1P' : '2P';
+
+      const board = document.createElement('div');
+      board.className = `block-board${mirror ? ' p2-board' : ''}`;  
+      const boardCells = [];
+      for (let i = 0; i < ROWS * COLS; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'board-cell';
+        board.appendChild(cell);
+        boardCells.push(cell);
+      }
+
+      boardWrapper.appendChild(label);
+      boardWrapper.appendChild(board);
+
+      // Side panel
+      const panel = document.createElement('div');
+      panel.className = 'side-panel';
+
+      // NEXT
+      const nextBox = document.createElement('div');
+      nextBox.className = 'panel-box';
+      const nextLabel = document.createElement('div');
+      nextLabel.className = 'panel-box-label';
+      nextLabel.textContent = 'NEXT';
+      const { grid: nextGrid, cells: nextCells } = buildMiniGridEl();
+      nextBox.appendChild(nextLabel);
+      nextBox.appendChild(nextGrid);
+
+      // HOLD
+      const holdBox = document.createElement('div');
+      holdBox.className = 'hold-box';
+      const holdLabel = document.createElement('div');
+      holdLabel.className = 'panel-box-label';
+      holdLabel.textContent = 'HOLD';
+      const { grid: holdGrid, cells: holdCells } = buildMiniGridEl();
+      holdBox.appendChild(holdLabel);
+      holdBox.appendChild(holdGrid);
+
+      // SCORE
+      const scoreBox = document.createElement('div');
+      scoreBox.className = 'panel-box';
+      const scoreLbl = document.createElement('div');
+      scoreLbl.className = 'panel-box-label';
+      scoreLbl.textContent = 'SCORE';
+      const scoreEl = document.createElement('div');
+      scoreEl.className = 'panel-box-value';
+      scoreEl.textContent = '0';
+      scoreBox.appendChild(scoreLbl);
+      scoreBox.appendChild(scoreEl);
+
+      // LEVEL
+      const levelBox = document.createElement('div');
+      levelBox.className = 'panel-box';
+      const levelLbl = document.createElement('div');
+      levelLbl.className = 'panel-box-label';
+      levelLbl.textContent = 'LEVEL';
+      const levelEl = document.createElement('div');
+      levelEl.className = 'panel-box-value';
+      levelEl.textContent = '1';
+      levelBox.appendChild(levelLbl);
+      levelBox.appendChild(levelEl);
+
+      panel.appendChild(nextBox);
+      panel.appendChild(holdBox);
+      panel.appendChild(scoreBox);
+      panel.appendChild(levelBox);
+
+      container.appendChild(panel);
+      container.appendChild(boardWrapper);
+
+      return { container, boardCells, nextCells, holdCells, scoreEl, levelEl, boardEl: board };
+    }
+
+    function buildGameLayout(mode) {
+      const content = document.getElementById('game-content');
+      content.innerHTML = '';
+
+      if (mode === '1p') {
+        const wrap = document.createElement('div');
+        wrap.className = 'layout-single';
+        const { container, boardCells, nextCells, holdCells, scoreEl, levelEl, boardEl } = buildPlayerBlock('p1', false);
+        wrap.appendChild(container);
+        content.appendChild(wrap);
+        return {
+          p1: { boardCells, nextCells, holdCells, scoreEl, levelEl, boardEl },
+          p2: null,
+        };
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'layout-versus';
+        const p1data = buildPlayerBlock('p1', false);
+        const p2data = buildPlayerBlock('p2', true);
+
+        const vsDivider = document.createElement('div');
+        vsDivider.className = 'vs-divider';
+        vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+
+        wrap.appendChild(p1data.container);
+        wrap.appendChild(vsDivider);
+        wrap.appendChild(p2data.container);
+        content.appendChild(wrap);
+
+        return {
+          p1: { boardCells: p1data.boardCells, nextCells: p1data.nextCells, holdCells: p1data.holdCells, scoreEl: p1data.scoreEl, levelEl: p1data.levelEl, boardEl: p1data.boardEl },
+          p2: { boardCells: p2data.boardCells, nextCells: p2data.nextCells, holdCells: p2data.holdCells, scoreEl: p2data.scoreEl, levelEl: p2data.levelEl, boardEl: p2data.boardEl },
+        };
+      }
+    }
+
+    // ============================================================
+    // GAME INSTANCES
+    // ============================================================
+    let p1 = null;
+    let p2 = null;
+    let currentMode = null;
+    let countdownCancelFn = null;
+
+    // ============================================================
+    // BATTLE RECORDS (localStorage - per CPU level)
+    // ============================================================
+    const API_URL = 'https://example.com/api/stats';
+
+    async function fetchGlobalStats() {
+      const statusEl = document.getElementById('global-stats-status');
+      if (statusEl) { statusEl.textContent = 'LOADING...'; statusEl.className = 'global-stats-status loading'; }
+      try {
+        const res = await fetch(`${API_URL}`, { method: 'GET', signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        // data expected: { 1: {battles, wins}, 2: {...}, 3: {...}, 4: {...} }
+        [1, 2, 3, 4].forEach(lv => {
+          const lvData = data[lv] || {};
+          const bEl = document.getElementById(`g-battles-${lv}`);
+          const wEl = document.getElementById(`g-wins-${lv}`);
+          if (bEl) bEl.textContent = typeof lvData.battles === 'number' ? lvData.battles.toLocaleString() : '—';
+          if (wEl) wEl.textContent = typeof lvData.wins === 'number' ? `${lvData.wins.toLocaleString()} WIN` : '— WIN';
+        });
+        if (statusEl) { statusEl.textContent = 'LIVE'; statusEl.className = 'global-stats-status'; }
+      } catch (e) {
+        console.error('[GlobalStats] fetchGlobalStats failed:', e);
+        if (statusEl) { statusEl.textContent = 'OFFLINE'; statusEl.className = 'global-stats-status error'; }
+      }
+    }
+
+    async function pushMatchResult(level, isWin) {
+      try {
+        await fetch(`${API_URL}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cpuLevel: level, win: isWin }),
+          signal: AbortSignal.timeout(5000),
+        });
+      } catch (e) {
+        console.error('[GlobalStats] pushMatchResult failed:', e);
+      }
+    }
+    function loadBattleRecords(level) {
+      return {
+        battles: parseInt(localStorage.getItem(`fbp_battles_cpu${level}`) || '0', 10),
+        wins:    parseInt(localStorage.getItem(`fbp_wins_cpu${level}`)    || '0', 10),
+      };
+    }
+
+    function saveBattleRecords(level, battles, wins) {
+      localStorage.setItem(`fbp_battles_cpu${level}`, String(battles));
+      localStorage.setItem(`fbp_wins_cpu${level}`,    String(wins));
+    }
+
+    function updateBattleRecordsUI() {
+      [1, 2, 3, 4].forEach(lv => {
+        const { battles, wins } = loadBattleRecords(lv);
+        const bEl = document.getElementById(`rec-battles-${lv}`);
+        const wEl = document.getElementById(`rec-wins-${lv}`);
+        if (bEl) bEl.textContent = battles;
+        if (wEl) wEl.textContent = wins;
+      });
+    }
+
+    // ============================================================
+    // GAME OVER
+    // ============================================================
+    function showGameOver(titleText, subtitleText, mode, scoreP1, scoreCpu) {
+      const overlay = document.getElementById('gameover-overlay');
+      document.getElementById('gameover-title').textContent = titleText;
+      const sub = document.getElementById('gameover-subtitle');
+      sub.textContent = subtitleText || '';
+      sub.style.display = subtitleText ? '' : 'none';
+
+      const singleEl = document.getElementById('gameover-score-single');
+      const versusEl = document.getElementById('gameover-versus-scores');
+      const retryBtn = document.getElementById('btn-retry');
+
+      if (mode === '2p') {
+        singleEl.classList.add('hidden');
+        versusEl.classList.remove('hidden');
+        retryBtn.classList.add('hidden');
+        const p1Val = document.getElementById('gameover-score-p1');
+        const cpuVal = document.getElementById('gameover-score-cpu');
+        p1Val.textContent = typeof scoreP1 === 'number' ? scoreP1.toLocaleString() : '0';
+        cpuVal.textContent = typeof scoreCpu === 'number' ? scoreCpu.toLocaleString() : '0';
+        // Highlight winner
+        p1Val.classList.toggle('winner', scoreP1 > scoreCpu);
+        cpuVal.classList.toggle('winner', scoreCpu > scoreP1);
+      } else {
+        singleEl.classList.remove('hidden');
+        versusEl.classList.add('hidden');
+        retryBtn.classList.remove('hidden');
+        document.getElementById('gameover-score-value').textContent = typeof scoreP1 === 'number' ? scoreP1.toLocaleString() : '—';
+      }
+      overlay.classList.remove('hidden');
+    }
+
+    function triggerGameOver1P() {
+      if (p1) p1.stop();
+      stopIdleBGM();
+      showGameOver('GAME OVER', '', '1p', p1 ? p1.score : 0, 0);
+    }
+
+    function triggerGameOver2P(winner) {
+      // winner: '1P' or 'CPU'
+      if (p1) p1.stop();
+      if (p2) p2.stop();
+      stopIdleBGM();
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+      const p1Score = p1 ? p1.score : 0;
+      const cpuScore = p2 ? p2.score : 0;
+      // 戦績を更新・保存
+      const rec = loadBattleRecords(cpuLevel);
+      rec.battles += 1;
+      if (winner === '1P') rec.wins += 1;
+      saveBattleRecords(cpuLevel, rec.battles, rec.wins);
+      pushMatchResult(cpuLevel, winner === '1P');
+      showGameOver(`${winner} WINS!`, ``, '2p', p1Score, cpuScore);
+    }
+
+    // ============================================================
+    // START GAME
+    // ============================================================
+    function startGameLogic(mode) {
+      currentMode = mode;
+      const layoutDom = buildGameLayout(mode);
+
+      // カウントダウン前にキーリスナーを登録→ Spaceキーがゲームスタート直後から即座に有効
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('keyup', onKeyUp);
+
+      if (mode === '1p') {
+        p1 = new BlockBoard(
+          layoutDom.p1,
+          () => triggerGameOver1P(),
+          null
+        );
+        p2 = null;
+        p1.init();
+        runCountdown(() => p1.start());
+      } else {
+        p1 = new BlockBoard(
+          layoutDom.p1,
+          () => triggerGameOver2P('CPU'),
+          (cleared) => { if (p2 && p2.running) p2.addGarbage(ATTACK_ROWS[Math.min(cleared, 4)]); }
+        );
+        p2 = new BlockBoard(
+          layoutDom.p2,
+          () => triggerGameOver2P('1P'),
+          (cleared) => { if (p1 && p1.running) p1.addGarbage(ATTACK_ROWS[Math.min(cleared, 4)]); }
+        );
+        p2.isOpponent = true; // 相手盤面はグレー描画
+        p1.init();
+        p2.init();
+        startCpuControl(p2, cpuLevel);  // CPU制御をセット（start()前に必ず呼ぶ）
+        runCountdown(() => { p1.start(); p2.start(); });
+      }
+    }
+
+    function stopGameLogic() {
+      if (p1) { p1.stop(); p1 = null; }
+      if (p2) { p2.stop(); p2 = null; }
+      stopSoftDrop();
+      stopIdleBGM();
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+    }
+
+    function forceQuitGame() {
+      // 1. ゲームループ完全停止
+      const scoreP1  = p1 ? p1.score : 0;
+      const scoreCpu = p2 ? p2.score : 0;
+      const mode = currentMode;
+      if (p1) { p1.stop(); p1 = null; }
+      if (p2) { p2.stop(); p2 = null; }
+      stopSoftDrop();
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+      // 2. AudioContextごと即時クローズ—全音源を完全破棄
+      killAudio();
+      // 3. スコア画面（リザルト画面）へ遷移
+      if (mode === '2p') {
+        showGameOver('強制終了', '', '2p', scoreP1, scoreCpu);
+      } else {
+        showGameOver('強制終了', '', '1p', scoreP1, 0);
+      }
+    }
+
+    // ============================================================
+    // COUNTDOWN
+    // ============================================================
+    function runCountdown(onDone) {
+      stopBGM();
+      const overlay = document.getElementById('countdown-overlay');
+      const numEl = document.getElementById('countdown-number');
+      overlay.classList.remove('hidden');
+      // カウントダウン画面表示直後にフォーカスを当てる
+      window.focus();
+      const steps = ['3','2','1','START!'];
+      let i = 0;
+      let cancelled = false;
+      let tickTimer = null;
+      countdownCancelFn = () => {
+        cancelled = true;
+        if (tickTimer) { clearTimeout(tickTimer); tickTimer = null; }
+        overlay.classList.add('hidden');
+        countdownCancelFn = null;
+      };
+      function tick() {
+        if (cancelled) return;
+        const text = steps[i];
+        numEl.textContent = text;
+        numEl.className = 'countdown-number' + (text === 'START!' ? ' start-text' : '');
+        if (text === 'START!') {
+          playSE('start');
+          playIdleBGM();
+        } else {
+          playSE('countdown');
+        }
+        i++;
+        if (i < steps.length) {
+          tickTimer = setTimeout(tick, 900);
+        } else {
+          tickTimer = setTimeout(() => {
+            if (cancelled) return;
+            overlay.classList.add('hidden');
+            window.focus();
+            countdownCancelFn = null;
+            keysHeld.clear();
+            onDone();
+          }, 900);
+        }
+      }
+      tick();
+    }
+
+    // ============================================================
+    // KEY HANDLING
+    // ============================================================
+    const keysHeld = new Set();
+
+    // Soft drop acceleration state
+    let softDropTimerId = null;
+    let softDropCount = 0;
+
+    function startSoftDrop() {
+      if (softDropTimerId !== null) return;
+      if (p1) p1.softDrop();
+      softDropCount = 1;
+      function scheduleNext() {
+        const delay = Math.max(40, 30 - Math.floor(softDropCount / 2) * 600);
+        softDropTimerId = setTimeout(() => {
+          if (!p1 || !p1.running) { stopSoftDrop(); return; }
+          p1.softDrop();
+          softDropCount++;
+          scheduleNext();
+        }, delay);
+      }
+      scheduleNext();
+    }
+
+    function stopSoftDrop() {
+      clearTimeout(softDropTimerId);
+      softDropTimerId = null;
+      softDropCount = 0;
+    }
+
+    function onKeyDown(e) {
+      if (keysHeld.has(e.code)) return;
+      keysHeld.add(e.code);
+      handle1PKey(e);
+    }
+
+    function onKeyUp(e) {
+      keysHeld.delete(e.code);
+      if (['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        if (p1) p1.stopDAS();
+      }
+      if (e.code === 'ArrowDown') {
+        stopSoftDrop();
+      }
+    }
+
+    function handle1PKey(e) {
+      if (!p1) return;
+      switch (e.code) {
+        case 'ArrowLeft':  p1.startDAS(() => p1.moveLeft()); break;
+        case 'ArrowRight': p1.startDAS(() => p1.moveRight()); break;
+        case 'ArrowDown':  startSoftDrop(); break;
+        case 'ArrowUp':    p1.rotate(1); break;
+        case 'Space':      e.preventDefault(); p1.hardDrop(); break;
+        case 'KeyA':       p1.rotate(-1); break;
+        case 'KeyS':       p1.rotate(1); break;
+        case 'ShiftLeft':
+        case 'ShiftRight': p1.hold(); break;
+      }
+    }
+
+    // ============================================================
+    // SCREEN NAVIGATION
+    // ============================================================
+    document.getElementById('btn-start').addEventListener('click', () => {
+      initAudio();
+      showScreen('mode');
+    });
+
+    document.getElementById('card-1p').addEventListener('click', () => {
+      initAudio();
+      resumeAudio();
+      state.selectedMode = '1p';
+      document.getElementById('game-mode-badge').textContent = '— SINGLE —';
+      showScreen('game');
+      startGameLogic('1p');
+    });
+
+    document.getElementById('card-2p').addEventListener('click', () => {
+      initAudio();
+      resumeAudio();
+      showScreen('cpu-level');
+    });
+
+    document.getElementById('btn-back-mode').addEventListener('click', () => showScreen('start'));
+
+    document.getElementById('btn-back-cpu-level').addEventListener('click', () => showScreen('mode'));
+
+    // CPU level cards
+    document.querySelectorAll('.cpu-level-card').forEach(card => {
+      const activate = () => {
+        initAudio();
+        resumeAudio();
+        cpuLevel = parseInt(card.dataset.level, 10);
+        state.selectedMode = '2p';
+        document.getElementById('game-mode-badge').textContent = `— VS CPU Lv.${cpuLevel} —`;
+        showScreen('game');
+        startGameLogic('2p');
+      };
+      card.addEventListener('click', activate);
+      card.addEventListener('keydown', (e) => {
+        if (e.code === 'Enter') activate();
+      });
+    });
+
+    document.getElementById('btn-quit').addEventListener('click', () => {
+      stopGameLogic();
+      document.getElementById('gameover-overlay').classList.add('hidden');
+      showScreen('mode');
+    });
+
+    document.getElementById('btn-retry').addEventListener('click', () => {
+      const mode = state.selectedMode;
+      stopGameLogic();
+      document.getElementById('gameover-overlay').classList.add('hidden');
+      startGameLogic(mode);
+    });
+
+    document.getElementById('btn-go-quit').addEventListener('click', () => {
+      stopGameLogic();
+      document.getElementById('gameover-overlay').classList.add('hidden');
+      showScreen('mode');
+    });
+
+    // Card keyboard support (mode select)
+    document.getElementById('card-1p').addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') document.getElementById('card-1p').click();
+    });
+    document.getElementById('card-2p').addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') document.getElementById('card-2p').click();
+    });
+
+    document.getElementById('btn-mute').addEventListener('click', () => {
+      isMuted = !isMuted;
+      setMute(isMuted);
+      const btn = document.getElementById('btn-mute');
+      btn.textContent = isMuted ? '🔇' : '🔊';
+      btn.classList.toggle('muted', isMuted);
+    });
+
+    // EnterキーとCLOSEボタンの共通処理関数（ゲーム状態マトリクス対応）
+    function handleEnterOrCloseAction() {
+      if (state.currentScreen !== 'game') return;
+      const gameoverVisible = !document.getElementById('gameover-overlay').classList.contains('hidden');
+      const countdownVisible = !document.getElementById('countdown-overlay').classList.contains('hidden');
+
+      if (currentMode === '2p') {
+        // パターンA: VS CPUモード
+        if (countdownVisible) {
+          // A-① カウントダウン中 → 難易度選択画面へ
+          if (countdownCancelFn) countdownCancelFn();
+          stopGameLogic();
+          document.getElementById('gameover-overlay').classList.add('hidden');
+          killAudio();
+          showScreen('cpu-level');
+        } else if (!gameoverVisible) {
+          // A-② ゲームプレイ中 → 降参（CPU WIN）リザルトへ
+          const p1Score = p1 ? p1.score : 0;
+          const cpuScore = p2 ? p2.score : 0;
+          if (p1) { p1.stop(); p1 = null; }
+          if (p2) { p2.stop(); p2 = null; }
+          stopSoftDrop();
+          document.removeEventListener('keydown', onKeyDown);
+          document.removeEventListener('keyup', onKeyUp);
+          killAudio();
+          // 降参 = バトル回数+1、勝利数は増やさない
+          const rec = loadBattleRecords(cpuLevel);
+          rec.battles += 1;
+          saveBattleRecords(cpuLevel, rec.battles, rec.wins);
+          pushMatchResult(cpuLevel, false);
+          showGameOver('CPU WINS!', '', '2p', p1Score, cpuScore);
+        } else {
+          // A-③ リザルト画面 → 難易度選択画面へ
+          stopGameLogic();
+          document.getElementById('gameover-overlay').classList.add('hidden');
+          showScreen('cpu-level');
+        }
+      } else {
+        // パターンB: シングルモード
+        if (countdownVisible) {
+          // B-① カウントダウン中 → モード選択画面へ
+          if (countdownCancelFn) countdownCancelFn();
+          stopGameLogic();
+          document.getElementById('gameover-overlay').classList.add('hidden');
+          killAudio();
+          showScreen('mode');
+        } else if (!gameoverVisible) {
+          // B-② ゲームプレイ中 → 現状維持（強制終了リザルトへ）
+          forceQuitGame();
+        } else {
+          // B-③ リザルト画面 → 現状維持（モード選択画面へ）
+          stopGameLogic();
+          document.getElementById('gameover-overlay').classList.add('hidden');
+          showScreen('mode');
+        }
+      }
+    }
+
+    // Enterキー: ゲームプレイ中は強制終了、ゲームオーバー画面はモード選択画面へ、それ以外は既存動作を維持
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') {
+        e.preventDefault();
+        handleEnterOrCloseAction();
+      }
+    });
+
+    // ============================================================
+    // CONTROLLER UI — 表示/非表示切り替え
+    // ============================================================
+    const ctrlEl = document.getElementById('game-controller');
+    const screenGameEl = document.getElementById('screen-game');
+
+    function showController() {
+      ctrlEl.classList.add('visible');
+      screenGameEl.classList.add('ctrl-visible');
+    }
+    function hideController() {
+      ctrlEl.classList.remove('visible');
+      screenGameEl.classList.remove('ctrl-visible');
+    }
+
+    // showScreen をラップしてコントローラー連動
+    const _origShowScreen = showScreen;
+    showScreen = function(name) {
+      _origShowScreen(name);
+      if (name === 'game') {
+        showController();
+        stopBGM();
+      } else {
+        hideController();
+        if (name === 'start' || name === 'mode' || name === 'cpu-level') {
+          startBGM();
+        }
+      }
+      if (name === 'cpu-level') {
+        updateBattleRecordsUI();
+        fetchGlobalStats();
+      }
+    };
+
+    // ============================================================
+    // CONTROLLER UI — ボタン操作（タッチ＆クリック完全対応）
+    // ============================================================
+
+    // 一発アクション用バインド: 押した瞬間のみ発火
+    function bindCtrlOnce(id, onPress) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        btn.classList.add('pressed');
+        onPress();
+      }, { passive: false });
+      btn.addEventListener('touchend',    (e) => { e.preventDefault(); btn.classList.remove('pressed'); }, { passive: false });
+      btn.addEventListener('touchcancel', (e) => { e.preventDefault(); btn.classList.remove('pressed'); }, { passive: false });
+      btn.addEventListener('mousedown', () => { btn.classList.add('pressed'); onPress(); });
+      btn.addEventListener('mouseup',   () => btn.classList.remove('pressed'));
+      btn.addEventListener('mouseleave',() => btn.classList.remove('pressed'));
+    }
+
+    // 押し続けアクション用バインド: 押している間アクション継続、離したら終了
+    function bindCtrlHold(id, onStart, onEnd) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        btn.classList.add('pressed');
+        onStart();
+      }, { passive: false });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        btn.classList.remove('pressed');
+        onEnd();
+      }, { passive: false });
+      btn.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        btn.classList.remove('pressed');
+        onEnd();
+      }, { passive: false });
+      btn.addEventListener('mousedown', () => { btn.classList.add('pressed'); onStart(); });
+      btn.addEventListener('mouseup',   () => { btn.classList.remove('pressed'); onEnd(); });
+      btn.addEventListener('mouseleave',() => { btn.classList.remove('pressed'); onEnd(); });
+    }
+
+    // ↑ ボタン: ハードドロップ（タップした瞬間にゴースト位置へ即固定）
+    bindCtrlOnce('ctrl-up', () => { if (p1 && p1.running) p1.hardDrop(); });
+
+    // ↓ ボタン: ソフトドロップ（押している間だんだん加速、離すと通常速度に戻る）
+    bindCtrlHold('ctrl-down',
+      () => { if (p1 && p1.running) startSoftDrop(); },
+      () => { stopSoftDrop(); }
+    );
+
+    // ← ボタン: 左移動（タップで1マス移動 + 長押しでDAS連続スライド）
+    bindCtrlHold('ctrl-left',
+      () => { if (p1 && p1.running) p1.startDAS(() => p1.moveLeft()); },
+      () => { if (p1) p1.stopDAS(); }
+    );
+
+    // → ボタン: 右移動（タップで1マス移動 + 長押しでDAS連続スライド）
+    bindCtrlHold('ctrl-right',
+      () => { if (p1 && p1.running) p1.startDAS(() => p1.moveRight()); },
+      () => { if (p1) p1.stopDAS(); }
+    );
+
+    // CLOSEボタン（EnterキーのhandleEnterOrCloseActionと完全統合）
+    bindCtrlOnce('ctrl-close', () => {
+      handleEnterOrCloseAction();
+    });
+
+    // 左回転ボタン（反時計回り）
+    bindCtrlOnce('ctrl-lrot', () => { if (p1 && p1.running) p1.rotate(-1); });
+
+    // 右回転ボタン（時計回り）
+    bindCtrlOnce('ctrl-rrot', () => { if (p1 && p1.running) p1.rotate(1); });
+
+    // ページロード直後にフォーカスを確保（初回のキーボード操作が即座に反応するように）
+    window.focus();
+
+    // マウスがボタン外やウィンドウ外でリリースされた場合の安全弁
+    // （DAS・ソフトドロップが止まらなくなるのを防ぐ）
+    window.addEventListener('mouseup', () => {
+      stopSoftDrop();
+      if (p1) p1.stopDAS();
+      ['ctrl-up','ctrl-down','ctrl-left','ctrl-right','ctrl-lrot','ctrl-rrot','ctrl-close'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('pressed');
+      });
+    });
+
+  </script>
+</body>
+</html>
